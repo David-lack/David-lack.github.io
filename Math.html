@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Maths Battle Arena</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #283e51 0%, #485563 100%);
+      min-height: 100vh;
+    }
+    #main-content {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      box-shadow: 0 8px 32px 0 rgba(44, 62, 80, 0.15);
+      border-radius: 24px;
+      padding: 32px 34px;
+      margin: 24px auto;
+      width: 370px;
+      max-width: 95vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.3s;
+      backdrop-filter: blur(8px);
+    }
+    .auth-card h1 {
+      font-size: 2.2em;
+      margin-bottom: 22px;
+      color: #ffd700;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 8px #222;
+    }
+    .auth-choices {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+    .form-area {
+      margin-top: 14px;
+      width: 100%;
+      background: rgba(44,62,80,0.12);
+      border-radius: 12px;
+      padding: 18px 8px 9px 8px;
+    }
+    input, select, button {
+      margin: 7px 0;
+      padding: 11px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: 1px solid #888;
+      background: #2c3e50;
+      color: #ffd700;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 270px;
+    }
+    button {
+      background: linear-gradient(90deg, #34495e 40%, #ffd700 100%);
+      color: #222;
+      font-weight: bold;
+      border: none;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(52, 73, 94, 0.15);
+      cursor: pointer;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #ffd700 0%, #34495e 100%);
+      color: #222;
+    }
+    .main-btn {
+      margin-top: 13px;
+      font-size: 1.07em;
+    }
+    .logout-btn {
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      font-size: 0.97em;
+      padding: 7px 18px;
+      margin-left: 18px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+    .logout-btn:hover {
+      background: #ffd700;
+      color: #c0392b;
+    }
+    .hidden { display: none !important; }
+    .user-info-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      font-size: 1.09em;
+      margin-bottom: 8px;
+      color: #ffd700;
+    }
+    .owner-badge {
+      background: #ffd700;
+      color: #222;
+      font-size: 0.96em;
+      font-weight: bold;
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin-left: 10px;
+      box-shadow: 0 1px 6px #222;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .game-setup {
+      width: 100%;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .battle-card {
+      width: 100%;
+      background: rgba(44,62,80,0.18);
+      border-radius: 16px;
+      padding: 24px 16px 14px 16px;
+      margin-top: 16px;
+      animation: fadeIn 0.7s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .battle-header h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.28em;
+      color: #ffd700;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+    .bars {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      width: 100%;
+      margin: 12px 0 18px 0;
+    }
+    .bar {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bar-bg {
+      background: #222c;
+      width: 100px;
+      height: 18px;
+      border-radius: 9px;
+      margin-top: 3px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px #333 inset;
+    }
+    #player-health {
+      background: linear-gradient(90deg, #e74c3c 0%, #f1c40f 100%);
+      height: 100%;
+      width: 100%;
+      border-radius: 9px;
+      transition: width 0.33s;
+    }
+    #npc-health {
+      background: linear-gradient(90deg, #3498db 0%, #8e44ad 100%);
+      height: 100%;
+      width: 100%;
+      border-radius: 9px;
+      transition: width 0.33s;
+    }
+    #power-bar {
+      background: linear-gradient(90deg, #ffd700 0%, #f39c12 100%);
+      height: 100%;
+      width: 0%;
+      border-radius: 9px;
+      transition: width 0.33s;
+    }
+    .battle-message {
+      min-height: 28px;
+      font-size: 1.15em;
+      color: #ffd700;
+      margin: 8px 0 2px 0;
+      text-shadow: 0 1px 6px #222;
+    }
+    #math-problem {
+      font-size: 1.2em;
+      margin: 12px 0 8px 0;
+      color: #fff;
+      background: #232526;
+      border-radius: 8px;
+      padding: 12px 17px;
+      box-shadow: 0 1px 4px #222;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      letter-spacing: 0.7px;
+    }
+    .score-streak {
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 0 8px 0;
+      font-size: 1.12em;
+      background: #232526;
+      border-radius: 8px;
+      padding: 8px 16px;
+      color: #ffd700;
+    }
+    .leaderboard-btn {
+      margin-top: 9px;
+      font-size: 1em;
+      background: #ffd700;
+      color: #222;
+      border: 2px solid #222;
+      box-shadow: 0 2px 8px rgba(52, 73, 94, 0.15);
+    }
+    .leaderboard-btn:hover {
+      background: #222;
+      color: #ffd700;
+      border: 2px solid #ffd700;
+    }
+    .error-msg {
+      color: #e74c3c;
+      font-size: 0.97em;
+      margin-top: 7px;
+      min-height: 18px;
+    }
+    .modal {
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(36, 41, 46, 0.96);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.5s;
+    }
+    .modal-content {
+      background: #232526;
+      color: #ffd700;
+      margin: auto;
+      padding: 30px 28px;
+      border-radius: 16px;
+      width: 320px;
+      max-width: 95vw;
+      box-shadow: 0 8px 32px 0 rgba(0,0,0,0.45);
+      position: relative;
+    }
+    .close-btn {
+      color: #f1c40f;
+      position: absolute;
+      top: 10px;
+      right: 18px;
+      font-size: 2em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .close-btn:hover {
+      color: #e74c3c;
+    }
+    #leaderboard-data h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    #leaderboard-data ol {
+      list-style: decimal inside;
+      padding-left: 0;
+      margin: 0;
+    }
+    #leaderboard-data li {
+      margin: 10px 0;
+      font-size: 1.06em;
+      color: #ffd700;
+    }
+    .delete-account-btn {
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      font-size: 0.93em;
+      padding: 7px 18px;
+      margin-left: 10px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      box-shadow: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .delete-account-btn:hover {
+      background: #ffd700;
+      color: #e74c3c;
+    }
+    #admin-panel {
+      background: #232526;
+      color: #ffd700;
+      border-radius: 14px;
+      margin: 20px 0 8px 0;
+      padding: 22px 22px 14px 22px;
+      width: 100%;
+      box-sizing: border-box;
+      box-shadow: 0 4px 14px #222;
+    }
+    #admin-panel h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1.1em;
+      color: #ffd700;
+      text-align: left;
+    }
+    #user-list {
+      margin-bottom: 12px;
+      font-size: 1em;
+    }
+    #user-list tr th, #user-list tr td {
+      padding: 4px 8px;
+      text-align: left;
+    }
+    #user-list tr th {
+      font-weight: bold;
+      color: #ffd700;
+      border-bottom: 1px solid #ffd700;
+    }
+    #user-list tr td {
+      color: #fff;
+    }
+    .admin-btn {
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      font-size: 0.92em;
+      border-radius: 6px;
+      padding: 3px 10px;
+      cursor: pointer;
+      margin-left: 6px;
+      margin-top: 2px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .admin-btn:hover {
+      background: #ffd700;
+      color: #e74c3c;
+    }
+    .reset-lb-btn {
+      background: #3498db;
+      color: #fff;
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-weight: bold;
+      margin-top: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .reset-lb-btn:hover {
+      background: #ffd700;
+      color: #3498db;
+    }
+    /* Password eye icon at field edge */
+    .pwd-field-wrapper {
+      position: relative;
+      width: 100%;
+      margin: 7px 0;
+    }
+    .pwd-field-wrapper input[type="password"], .pwd-field-wrapper input[type="text"] {
+      padding-right: 36px !important;
+      box-sizing: border-box;
+    }
+    .see-pwd-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: #ffd700;
+      font-size: 1.4em;
+      cursor: pointer;
+      padding: 0;
+      z-index: 2;
+      height: 28px;
+      width: 28px;
+      line-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .see-pwd-btn:active, .see-pwd-btn:focus { outline: none; }
+  </style>
+</head>
+<body>
+  <div id="main-content">
+    <div id="auth-section" class="card auth-card">
+      <h1>Maths Battle Arena</h1>
+      <div class="auth-choices">
+        <button type="button" id="show-signin">Sign In</button>
+        <button type="button" id="show-signup">Create Account</button>
+      </div>
+      <form id="signin-form" class="form-area hidden" autocomplete="off" onsubmit="return false;">
+        <h2>Sign In</h2>
+        <input type="text" id="signin-username" placeholder="Username" autocomplete="username">
+        <div class="pwd-field-wrapper">
+          <input type="password" id="signin-password" placeholder="Password" autocomplete="current-password">
+          <button type="button" id="toggle-signin-pwd" class="see-pwd-btn" tabindex="-1">&#128065;</button>
+        </div>
+        <button type="button" id="signin-btn">Sign In</button>
+        <div id="signin-error" class="error-msg"></div>
+      </form>
+      <form id="signup-form" class="form-area hidden" autocomplete="off" onsubmit="return false;">
+        <h2>Create Account</h2>
+        <input type="text" id="signup-username" placeholder="Username" autocomplete="username">
+        <div class="pwd-field-wrapper">
+          <input type="password" id="signup-password" placeholder="Password" autocomplete="new-password">
+          <button type="button" id="toggle-signup-pwd" class="see-pwd-btn" tabindex="-1">&#128065;</button>
+        </div>
+        <input type="date" id="signup-birthday" placeholder="Birthday">
+        <button type="button" id="signup-btn">Create Account</button>
+        <div id="signup-error" class="error-msg"></div>
+      </form>
+    </div>
+    <div id="game-section" class="card game-card hidden">
+      <div class="user-info-bar">
+        <span id="user-info"></span>
+        <button id="logout-btn" class="logout-btn">Logout</button>
+        <button id="delete-account-btn" class="delete-account-btn">Delete My Account</button>
+      </div>
+      <button id="admin-panel-btn" class="main-btn hidden" style="margin-bottom:10px;">Admin Panel</button>
+      <button id="show-usernames-btn" class="main-btn hidden" style="margin-bottom:10px;">Write Usernames</button>
+      <div id="username-list-area" class="modal hidden">
+        <div class="modal-content">
+          <span id="close-usernames-btn" class="close-btn">&times;</span>
+          <div id="username-list-content"></div>
+        </div>
+      </div>
+      <div id="admin-panel" class="hidden"></div>
+      <div class="game-setup">
+        <h2>Choose Difficulty</h2>
+        <select id="difficulty-select">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button id="start-game-btn" class="main-btn">Start Battle</button>
+      </div>
+      <div id="battle-area" class="battle-card hidden">
+        <div class="battle-header">
+          <h2 id="battle-status"></h2>
+        </div>
+        <div class="bars">
+          <div class="bar">
+            <span>Player HP</span>
+            <div class="bar-bg"><div id="player-health"></div></div>
+          </div>
+          <div class="bar">
+            <span>NPC HP</span>
+            <div class="bar-bg"><div id="npc-health"></div></div>
+          </div>
+          <div class="bar">
+            <span>Power</span>
+            <div class="bar-bg"><div id="power-bar"></div></div>
+          </div>
+        </div>
+        <div id="battle-message" class="battle-message"></div>
+        <div id="math-problem" class="math-problem"></div>
+        <input type="number" id="answer-input" placeholder="Your answer">
+        <button type="button" id="submit-answer" class="main-btn">Attack!</button>
+        <div class="score-streak">
+          <div><strong>Streak:</strong> <span id="streak-count">0</span></div>
+          <div><strong>Score:</strong> <span id="score-count">0</span></div>
+        </div>
+        <button type="button" id="show-leaderboard-btn" class="main-btn leaderboard-btn">Leaderboard</button>
+      </div>
+    </div>
+  </div>
+  <div id="leaderboard-area" class="modal hidden">
+    <div class="modal-content">
+      <span id="close-leaderboard" class="close-btn">&times;</span>
+      <div id="leaderboard-data"></div>
+    </div>
+  </div>
+  <!-- CONTINUE MODAL for next round -->
+  <div id="continue-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 style="text-align:center;">Do you want to continue?</h2>
+      <button type="button" id="continue-yes-btn" class="main-btn" style="margin:10px 12px 0 0;">Yes</button>
+      <button type="button" id="continue-no-btn" class="main-btn" style="margin:10px 0 0 12px;">No</button>
+    </div>
+  </div>
+  <script>
+    // Remove Imgoober69 everywhere
+    function cleanUsers(users) {
+      delete users['Imgoober69'];
+      return users;
+    }
+    (function(){
+      let users = JSON.parse(localStorage.getItem('mba_users') || '{}');
+      users = cleanUsers(users);
+      if (!users['David_lack']) {
+        users['David_lack'] = { password: 'David@123', birthday: '', score: 0, owner: true };
+      } else {
+        users['David_lack'].owner = true;
+        users['David_lack'].password = 'David@123';
+      }
+      localStorage.setItem('mba_users', JSON.stringify(users));
+    })();
+
+    // Auth system
+    const authSection = document.getElementById('auth-section');
+    const signupForm = document.getElementById('signup-form');
+    const signinForm = document.getElementById('signin-form');
+    const showSignup = document.getElementById('show-signup');
+    const showSignin = document.getElementById('show-signin');
+    const signupBtn = document.getElementById('signup-btn');
+    const signinBtn = document.getElementById('signin-btn');
+    const signupError = document.getElementById('signup-error');
+    const signinError = document.getElementById('signin-error');
+    const gameSection = document.getElementById('game-section');
+    const userInfo = document.getElementById('user-info');
+    const logoutBtn = document.getElementById('logout-btn');
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+    const adminPanel = document.getElementById('admin-panel');
+    const adminPanelBtn = document.getElementById('admin-panel-btn');
+    const showUsernamesBtn = document.getElementById('show-usernames-btn');
+    const usernameListArea = document.getElementById('username-list-area');
+    const usernameListContent = document.getElementById('username-list-content');
+    const closeUsernamesBtn = document.getElementById('close-usernames-btn');
+
+    showSignup.onclick = () => {
+      signupForm.classList.remove('hidden');
+      signinForm.classList.add('hidden');
+      signupError.textContent = "";
+      signinError.textContent = "";
+    };
+    showSignin.onclick = () => {
+      signinForm.classList.remove('hidden');
+      signupForm.classList.add('hidden');
+      signupError.textContent = "";
+      signinError.textContent = "";
+    };
+
+    function getUsers() {
+      let users = JSON.parse(localStorage.getItem('mba_users') || '{}');
+      users = cleanUsers(users);
+      return users;
+    }
+    function saveUsers(users) {
+      users = cleanUsers(users);
+      localStorage.setItem('mba_users', JSON.stringify(users));
+    }
+    let currentUser = null;
+
+    signupBtn.onclick = function() {
+      const username = document.getElementById('signup-username').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const birthday = document.getElementById('signup-birthday').value;
+      if (!username || !password || !birthday) {
+        signupError.textContent = "All fields required!";
+        return;
+      }
+      const users = getUsers();
+      if (users[username]) {
+        signupError.textContent = "Username already exists!";
+        return;
+      }
+      users[username] = { password: password, birthday: birthday, score: 0, owner: username === "David_lack" };
+      saveUsers(users);
+      currentUser = username;
+      postLogin();
+    };
+
+    signinBtn.onclick = function() {
+      const username = document.getElementById('signin-username').value.trim();
+      const password = document.getElementById('signin-password').value;
+      const users = getUsers();
+      if (!users[username] || users[username].password !== password) {
+        signinError.textContent = "Invalid username or password!";
+        return;
+      }
+      currentUser = username;
+      postLogin();
+    };
+
+    function postLogin() {
+      authSection.classList.add('hidden');
+      gameSection.classList.remove('hidden');
+      const users = getUsers();
+      const isOwner = users[currentUser] && users[currentUser].owner;
+      userInfo.innerHTML = `Logged in as: ${currentUser}${isOwner ? '<span class="owner-badge">OWNER</span>' : ''}`;
+      resetGameUI();
+      document.getElementById('answer-input').value = "";
+      renderAdminPanel(isOwner);
+      adminPanelBtn.classList.toggle('hidden', !isOwner);
+      showUsernamesBtn.classList.toggle('hidden', !isOwner);
+    }
+
+    logoutBtn.onclick = () => {
+      currentUser = null;
+      gameSection.classList.add('hidden');
+      authSection.classList.remove('hidden');
+      document.getElementById('signin-username').value = "";
+      document.getElementById('signin-password').value = "";
+      document.getElementById('signup-username').value = "";
+      document.getElementById('signup-password').value = "";
+      document.getElementById('signup-birthday').value = "";
+      signinError.textContent = "";
+      signupError.textContent = "";
+      signupForm.classList.add('hidden');
+      signinForm.classList.add('hidden');
+      renderAdminPanel(false);
+      adminPanelBtn.classList.add('hidden');
+      showUsernamesBtn.classList.add('hidden');
+    };
+
+    deleteAccountBtn.onclick = function() {
+      if (!currentUser) return;
+      if (confirm("Are you sure you want to delete your account? This cannot be undone.")) {
+        let users = getUsers();
+        if (users[currentUser]) {
+          delete users[currentUser];
+          saveUsers(users);
+        }
+        logoutBtn.onclick();
+        alert("Account deleted.");
+      }
+    };
+
+    function renderAdminPanel(isOwner) {
+      if (!isOwner) {
+        adminPanel.innerHTML = "";
+        adminPanel.classList.add('hidden');
+        return;
+      }
+      const users = getUsers();
+      let tableRows = "";
+      Object.entries(users).forEach(([name, data]) => {
+        let badge = data.owner ? '<span class="owner-badge">OWNER</span>' : '';
+        let delBtn = (name !== currentUser) 
+          ? `<button class="admin-btn" onclick="window.deleteUser('${name}')">Delete</button>` 
+          : '';
+        tableRows += `<tr>
+          <td>${name} ${badge}</td>
+          <td>${data.birthday || "-"}</td>
+          <td>${delBtn}</td>
+        </tr>`;
+      });
+      adminPanel.innerHTML = `
+        <h2>Admin Panel</h2>
+        <table id="user-list" style="width:100%">
+          <tr><th>Username</th><th>Birthday</th><th>Action</th></tr>
+          ${tableRows}
+        </table>
+        <button class="reset-lb-btn" onclick="window.resetLeaderboard()">Reset Leaderboard</button>
+      `;
+      adminPanel.classList.add('hidden');
+    }
+    window.deleteUser = function(username) {
+      if (username === currentUser) return;
+      if (!confirm(`Delete account '${username}'? This cannot be undone.`)) return;
+      let users = getUsers();
+      if (users[username]) {
+        delete users[username];
+        saveUsers(users);
+        renderAdminPanel(true);
+        alert(`Account '${username}' deleted.`);
+      }
+    };
+    window.resetLeaderboard = function() {
+      if (!confirm("Reset the leaderboard for all users?")) return;
+      localStorage.setItem('mba_leaderboard', JSON.stringify([]));
+      alert("Leaderboard reset.");
+    };
+
+    window.onload = () => {
+      if (currentUser) postLogin();
+      else {
+        authSection.classList.remove('hidden');
+        gameSection.classList.add('hidden');
+        signupForm.classList.add('hidden');
+        signinForm.classList.add('hidden');
+        renderAdminPanel(false);
+        adminPanelBtn.classList.add('hidden');
+        showUsernamesBtn.classList.add('hidden');
+      }
+    };
+
+    adminPanelBtn.onclick = function() {
+      adminPanel.classList.toggle('hidden');
+    };
+
+    showUsernamesBtn.onclick = function() {
+      usernameListArea.classList.remove('hidden');
+      let users = getUsers();
+      let usernames = Object.keys(users);
+      let html = "<h3>Usernames & Passwords</h3>";
+      if (usernames.length === 0) {
+        html += "<div>No users registered yet.</div>";
+      } else {
+        html += "<ul style='padding-left:0;list-style:none;'>";
+        usernames.forEach(u => {
+          const badge = users[u].owner ? " <span class='owner-badge'>OWNER</span>" : "";
+          html += `<li style="margin:7px 0;font-size:1.15em;color:#ffd700;">${u}${badge} &mdash; <span style="color:#fff;">${users[u].password}</span></li>`;
+        });
+        html += "</ul>";
+      }
+      usernameListContent.innerHTML = html;
+    };
+    closeUsernamesBtn.onclick = function() {
+      usernameListArea.classList.add('hidden');
+    };
+    window.addEventListener('mousedown', function(e) {
+      if (!usernameListArea.classList.contains('hidden') && !usernameListArea.contains(e.target) && e.target !== showUsernamesBtn) {
+        usernameListArea.classList.add('hidden');
+      }
+    });
+
+    // SEE PASSWORD toggle logic
+    function addPwdToggle(pwdInputId, toggleBtnId) {
+      const pwdInput = document.getElementById(pwdInputId);
+      const toggleBtn = document.getElementById(toggleBtnId);
+      toggleBtn.onclick = function(event) {
+        event.preventDefault();
+        if (pwdInput.type === "password") {
+          pwdInput.type = "text";
+          toggleBtn.style.color = "#e74c3c";
+        } else {
+          pwdInput.type = "password";
+          toggleBtn.style.color = "#ffd700";
+        }
+      };
+    }
+    addPwdToggle("signin-password", "toggle-signin-pwd");
+    addPwdToggle("signup-password", "toggle-signup-pwd");
+
+    // ---- Game Logic ----
+    const startGameBtn = document.getElementById('start-game-btn');
+    const battleArea = document.getElementById('battle-area');
+    const playerHealthBar = document.getElementById('player-health');
+    const npcHealthBar = document.getElementById('npc-health');
+    const powerBar = document.getElementById('power-bar');
+    const battleStatus = document.getElementById('battle-status');
+    const mathProblemDiv = document.getElementById('math-problem');
+    const answerInput = document.getElementById('answer-input');
+    const submitAnswer = document.getElementById('submit-answer');
+    const battleMessage = document.getElementById('battle-message');
+    const streakCount = document.getElementById('streak-count');
+    const scoreCount = document.getElementById('score-count');
+    const showLeaderboardBtn = document.getElementById('show-leaderboard-btn');
+    const leaderboardArea = document.getElementById('leaderboard-area');
+    const leaderboardData = document.getElementById('leaderboard-data');
+    const closeLeaderboard = document.getElementById('close-leaderboard');
+    const difficultySelect = document.getElementById('difficulty-select');
+    const continueModal = document.getElementById('continue-modal');
+    const continueYesBtn = document.getElementById('continue-yes-btn');
+    const continueNoBtn = document.getElementById('continue-no-btn');
+
+    let playerHealth, npcHealth, power, streak, score, difficulty, currentProblem, currentAnswer;
+    let round = 1;
+    let isBoss = false;
+
+    function resetGameUI() {
+      battleArea.classList.add('hidden');
+      leaderboardArea.classList.add('hidden');
+      streakCount.textContent = "0";
+      scoreCount.textContent = "0";
+      answerInput.value = "";
+      submitAnswer.disabled = false;
+      answerInput.disabled = false;
+      battleMessage.textContent = "";
+      battleStatus.textContent = "";
+      round = 1;
+      isBoss = false;
+    }
+
+    startGameBtn.onclick = () => {
+      if (!currentUser) return;
+      difficulty = difficultySelect.value;
+      round = 1;
+      isBoss = false;
+      playerHealth = 100;
+      npcHealth = 100;
+      power = 0;
+      streak = 0;
+      score = 0;
+      battleArea.classList.remove('hidden');
+      leaderboardArea.classList.add('hidden');
+      nextProblem();
+      updateBars();
+      battleStatus.textContent = "Battle Start!";
+      battleMessage.textContent = "";
+      streakCount.textContent = streak;
+      scoreCount.textContent = score;
+      answerInput.value = "";
+      submitAnswer.disabled = false;
+      answerInput.disabled = false;
+      answerInput.focus();
+    };
+
+    submitAnswer.onclick = () => {
+      const answer = answerInput.value.trim();
+      if (answer === "") return;
+      let isCorrect = parseInt(answer) === currentAnswer;
+      if (isCorrect) {
+        // If power is full, instant defeat
+        if (power === 100) {
+          npcHealth = 0;
+          battleMessage.textContent = "Power Attack! Enemy instantly defeated!";
+          power = 0; // Power used after each instant defeat
+        } else {
+          npcHealth = Math.max(npcHealth - 10, 0);
+          streak++;
+          score += 10;
+          battleMessage.textContent = "Correct! You deal 10 damage.";
+          if (streak === 10) {
+            power = 100;
+            battleMessage.textContent += " Power Awakened!";
+          }
+        }
+      } else {
+        playerHealth = Math.max(playerHealth - 10, 0);
+        streak = 0;
+        battleMessage.textContent = "Incorrect! You take 10 damage.";
+      }
+      updateBars();
+      streakCount.textContent = streak;
+      scoreCount.textContent = score;
+
+      if (playerHealth <= 0) {
+        battleStatus.textContent = "You Lose!";
+        endGame(false);
+        return;
+      }
+      if (npcHealth <= 0) {
+        battleStatus.textContent = isBoss ? "Boss Defeated!" : "You Win!";
+        showContinueModal();
+        return;
+      }
+      nextProblem();
+    };
+
+    answerInput.addEventListener("keyup", function(event) {
+      if (event.key === "Enter") submitAnswer.click();
+    });
+
+    function updateBars() {
+      playerHealthBar.style.width = playerHealth + "%";
+      npcHealthBar.style.width = (isBoss ? (npcHealth/5) : npcHealth) + "%";
+      powerBar.style.width = power + "%";
+    }
+
+    function endGame(won) {
+      submitAnswer.disabled = true;
+      answerInput.disabled = true;
+      saveScore(score);
+      setTimeout(() => {
+        showLeaderboard();
+        resetGameUI();
+      }, 1500);
+    }
+
+    function saveScore(score) {
+      let lb = JSON.parse(localStorage.getItem('mba_leaderboard') || "[]");
+      lb.push({user: currentUser, score, date: new Date().toLocaleString()});
+      lb = lb.sort((a, b) => b.score - a.score).slice(0, 10);
+      localStorage.setItem('mba_leaderboard', JSON.stringify(lb));
+    }
+
+    showLeaderboardBtn.onclick = showLeaderboard;
+    closeLeaderboard.onclick = () => {
+      leaderboardArea.classList.add('hidden');
+    };
+
+    function showLeaderboard() {
+      leaderboardArea.classList.remove('hidden');
+      let lb = JSON.parse(localStorage.getItem('mba_leaderboard') || "[]");
+      let html = "<h3>Leaderboard</h3>";
+      if (lb.length === 0) {
+        html += "<div>No scores yet. Be the first!</div>";
+      } else {
+        html += "<ol>";
+        lb.forEach(entry => {
+          html += `<li>${entry.user}: ${entry.score} pts <span style="font-size:0.85em;color:#fff;">(${entry.date})</span></li>`;
+        });
+        html += "</ol>";
+      }
+      leaderboardData.innerHTML = html;
+    }
+
+    leaderboardArea.onclick = function(e) {
+      if (e.target === leaderboardArea) leaderboardArea.classList.add('hidden');
+    };
+
+    function nextProblem() {
+      [currentProblem, currentAnswer] = generateProblem(difficulty);
+      mathProblemDiv.textContent = `Solve: ${currentProblem}`;
+      answerInput.value = "";
+      answerInput.focus();
+    }
+
+    // Modal for continue after NPC/Boss defeat
+    function showContinueModal() {
+      continueModal.classList.remove('hidden');
+    }
+    continueYesBtn.onclick = function() {
+      continueModal.classList.add('hidden');
+      round++;
+      isBoss = (round % 2 === 0);
+      npcHealth = isBoss ? 500 : 100;
+      updateBars();
+      battleStatus.textContent = isBoss ? `Boss Round! (HP: ${npcHealth})` : `Round ${round}`;
+      battleMessage.textContent = "";
+      nextProblem();
+      answerInput.disabled = false;
+      submitAnswer.disabled = false;
+    };
+    continueNoBtn.onclick = function() {
+      continueModal.classList.add('hidden');
+      endGame(true);
+    };
+
+    // ---- Math problem generator ----
+    function generateProblem(difficulty) {
+      if (difficulty === "easy") {
+        let a = randInt(1, 10), b = randInt(1, 10);
+        let op = Math.random() < 0.5 ? "+" : "-";
+        let answer = op === "+" ? a + b : a - b;
+        return [`${a} ${op} ${b}`, answer];
+      } else if (difficulty === "medium") {
+        let a = randInt(10, 50), b = randInt(2, 12);
+        let op = Math.random() < 0.5 ? "*" : "/";
+        if (op === "*") {
+          return [`${a} * ${b}`, a * b];
+        } else {
+          let res = a * b;
+          return [`${res} / ${b}`, a];
+        }
+      } else {
+        let a = randInt(10, 99), b = randInt(1, 9), c = randInt(1, 9);
+        let op1 = Math.random() < 0.5 ? "+" : "-";
+        let op2 = Math.random() < 0.5 ? "*" : "/";
+        let expr = `(${a} ${op1} ${b}) ${op2} ${c}`;
+        let answer;
+        try {
+          answer = eval(expr);
+          if (op2 === "/") answer = Math.floor(answer);
+        } catch {
+          return generateProblem(difficulty);
+        }
+        return [expr, answer];
+      }
+    }
+    function randInt(a, b) {
+      return Math.floor(Math.random() * (b - a + 1)) + a;
+    }
+  </script>
+</body>
+</html>
