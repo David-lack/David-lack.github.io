@@ -5,10 +5,10 @@
 <title>Maths Battle Arena</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body {margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#283e51 0%,#485563 100%);min-height:100vh;color:#ffd700;}
-  #main-content{display:flex;flex-direction:column;align-items:center;padding-top:20px;}
-  .card{background:rgba(255,255,255,0.04);box-shadow:0 8px 32px 0 rgba(44,62,80,0.15);border-radius:24px;padding:32px 34px;margin:16px auto;width:370px;max-width:95vw;display:flex;flex-direction:column;align-items:center;backdrop-filter: blur(8px);}
-  h1{font-size:2.2em;margin-bottom:22px;letter-spacing:2px;text-shadow:0 2px 8px #222;}
+  body {margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#283e51 0%,#485563 100%);min-height:100vh;}
+  #main-content{min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding-top:20px;flex-direction:column;align-items:center;}
+  .card{background:rgba(255,255,255,0.04);box-shadow:0 8px 32px 0 rgba(44,62,80,0.15);border-radius:24px;padding:32px 34px;margin:24px auto;width:370px;max-width:95vw;display:flex;flex-direction:column;align-items:center;backdrop-filter: blur(8px);}
+  h1{font-size:2.2em;margin-bottom:22px;color:#ffd700;letter-spacing:2px;text-shadow:0 2px 8px #222;}
   input,button,select{margin:7px 0;padding:11px;font-size:1em;border-radius:6px;border:1px solid #888;background:#2c3e50;color:#ffd700;width:100%;max-width:270px;box-sizing:border-box;}
   button{font-weight:bold;cursor:pointer;transition:0.2s;}
   button:hover{background:#ffd700;color:#222;}
@@ -21,10 +21,11 @@
   .bars{display:flex;justify-content:space-between;gap:16px;width:100%;margin:12px 0;}
   .bar{flex:1 1 0;display:flex;flex-direction:column;align-items:center;}
   .bar-bg{background:#222c;width:100%;overflow:hidden;border-radius:9px;margin-top:3px;}
-  .battle-message{min-height:28px;font-size:1.15em;margin:8px 0 2px 0;text-shadow:0 1px 6px #222;white-space:pre-line;text-align:center;}
+  .battle-message{min-height:28px;font-size:1.15em;color:#ffd700;margin:8px 0 2px 0;text-shadow:0 1px 6px #222;white-space:pre-line;text-align:center;}
   table{width:100%;color:#ffd700;border-collapse:collapse;margin-top:10px;}
   th,td{border:1px solid #888;padding:6px;text-align:center;}
   th{background:#2c3e50;}
+  #broadcast-overlay {position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display:flex; justify-content:center; align-items:center; color:#ffd700; font-size:2em; text-align:center; z-index:9999; display:none; padding:20px;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -52,7 +53,7 @@
 
   <!-- GAME SECTION -->
   <div id="game-section" class="card hidden">
-    <h1>Maths Battle Arena</h1>
+    <h1>Battle Arena</h1>
     <div class="bars">
       <div class="bar">Player HP<div class="bar-bg"><div id="player-health"></div></div></div>
       <div class="bar">NPC HP<div class="bar-bg"><div id="npc-health"></div></div></div>
@@ -69,23 +70,12 @@
     <button id="logout-btn">Logout</button>
   </div>
 
-  <!-- LEADERBOARD -->
-  <div id="leaderboard-section" class="card hidden">
-    <h1>Leaderboard</h1>
-    <button id="toggle-leaderboard">Hide/Show Leaderboard</button>
-    <table id="leaderboard-table">
-      <thead><tr><th>Username</th><th>Score</th></tr></thead>
-      <tbody id="leaderboard-body"></tbody>
-    </table>
-    <button id="reset-leaderboard">Reset Leaderboard</button>
-  </div>
-
   <!-- ADMIN PANEL -->
   <div id="admin-section" class="card hidden">
     <h1>Admin Panel</h1>
     <button id="refresh-users">Refresh User List</button>
     <table>
-      <thead><tr><th>Username</th><th>Password</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Username</th><th>Password</th><th>Admin</th><th>Actions</th></tr></thead>
       <tbody id="user-list"></tbody>
     </table>
     <input type="text" id="broadcast-message" placeholder="Broadcast message">
@@ -94,8 +84,11 @@
   </div>
 </div>
 
+<!-- Broadcast Overlay -->
+<div id="broadcast-overlay"></div>
+
 <script>
-  // Firebase config
+  // FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyC2PqmEQE5JnupeQkhGJ_kWVts80eWtnUA",
     authDomain: "pizza-f6116.firebaseapp.com",
@@ -108,71 +101,70 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // UI
-  const authSection=document.getElementById('auth-section');
-  const signinForm=document.getElementById('signin-form');
-  const signupForm=document.getElementById('signup-form');
-  const showSignin=document.getElementById('show-signin');
-  const showSignup=document.getElementById('show-signup');
-  const signinBtn=document.getElementById('signin-btn');
-  const signupBtn=document.getElementById('signup-btn');
-  const signinError=document.getElementById('signin-error');
-  const signupError=document.getElementById('signup-error');
+  // UI Elements
+  const authSection = document.getElementById('auth-section');
+  const signinForm = document.getElementById('signin-form');
+  const signupForm = document.getElementById('signup-form');
+  const showSignin = document.getElementById('show-signin');
+  const showSignup = document.getElementById('show-signup');
+  const signinBtn = document.getElementById('signin-btn');
+  const signupBtn = document.getElementById('signup-btn');
+  const signinError = document.getElementById('signin-error');
+  const signupError = document.getElementById('signup-error');
 
-  const gameSection=document.getElementById('game-section');
-  const playerHealthBar=document.getElementById('player-health');
-  const npcHealthBar=document.getElementById('npc-health');
-  const mathProblem=document.getElementById('math-problem');
-  const answerInput=document.getElementById('answer-input');
-  const submitAnswer=document.getElementById('submit-answer');
-  const battleMessage=document.getElementById('battle-message');
-  const logoutBtn=document.getElementById('logout-btn');
-  const startBattleBtn=document.getElementById('start-battle');
-  const difficultySelect=document.getElementById('difficulty');
+  const gameSection = document.getElementById('game-section');
+  const playerHealthBar = document.getElementById('player-health');
+  const npcHealthBar = document.getElementById('npc-health');
+  const mathProblem = document.getElementById('math-problem');
+  const answerInput = document.getElementById('answer-input');
+  const submitAnswer = document.getElementById('submit-answer');
+  const battleMessage = document.getElementById('battle-message');
+  const logoutBtn = document.getElementById('logout-btn');
+  const startBattleBtn = document.getElementById('start-battle');
+  const difficultySelect = document.getElementById('difficulty');
 
-  const leaderboardSection=document.getElementById('leaderboard-section');
-  const leaderboardBody=document.getElementById('leaderboard-body');
-  const toggleLeaderboardBtn=document.getElementById('toggle-leaderboard');
-  const resetLeaderboardBtn=document.getElementById('reset-leaderboard');
+  const adminSection = document.getElementById('admin-section');
+  const userListBody = document.getElementById('user-list');
+  const refreshUsersBtn = document.getElementById('refresh-users');
+  const broadcastInput = document.getElementById('broadcast-message');
+  const sendBroadcastBtn = document.getElementById('send-broadcast');
+  const logoutAdminBtn = document.getElementById('logout-admin');
+  const broadcastOverlay = document.getElementById('broadcast-overlay');
 
-  const adminSection=document.getElementById('admin-section');
-  const userListBody=document.getElementById('user-list');
-  const refreshUsersBtn=document.getElementById('refresh-users');
-  const broadcastInput=document.getElementById('broadcast-message');
-  const sendBroadcastBtn=document.getElementById('send-broadcast');
-  const logoutAdminBtn=document.getElementById('logout-admin');
+  // Show forms
+  showSignup.onclick = ()=>{signupForm.classList.remove('hidden');signinForm.classList.add('hidden');signupError.textContent='';signinError.textContent='';};
+  showSignin.onclick = ()=>{signinForm.classList.remove('hidden');signupForm.classList.add('hidden');signupError.textContent='';signinError.textContent='';};
 
-  showSignup.onclick=()=>{signupForm.classList.remove('hidden');signinForm.classList.add('hidden');signupError.textContent='';signinError.textContent='';};
-  showSignin.onclick=()=>{signinForm.classList.remove('hidden');signupForm.classList.add('hidden');signupError.textContent='';signinError.textContent='';};
+  let currentUser=null, currentUserData=null;
+  let playerHP=100, npcHP=100, currentAnswer=null;
 
-  let currentUser=null,currentUserData=null,playerHP=100,npcHP=100,currentAnswer=null;
-
-  // Ensure owner exists
+  // Ensure Owner
   function ensureOwner(){
     const ownerRef=db.ref('users/David_lack');
     ownerRef.once('value').then(snap=>{
-      if(!snap.exists()) ownerRef.set({password:"David@123",owner:true,admin:true,score:0});
-      else ownerRef.update({password:"David@123",owner:true,admin:true});
+      if(!snap.exists()) ownerRef.set({password:"David@123",admin:true});
+      else ownerRef.update({password:"David@123",admin:true});
     });
   }
   ensureOwner();
 
-  // Signup
-  signupBtn.onclick=()=>{
+  // SIGNUP
+  signupBtn.onclick = ()=>{
     const username=document.getElementById('signup-username').value.trim();
     const password=document.getElementById('signup-password').value;
     if(!username||!password){signupError.textContent="All fields required!";return;}
     db.ref('users/'+username).get().then(snap=>{
       if(snap.exists()){signupError.textContent="Username exists!";return;}
-      db.ref('users/'+username).set({password,owner:false,admin:false,score:0});
+      db.ref('users/'+username).set({password,admin:false});
       currentUser=username;
-      currentUserData={password,owner:false,admin:false,score:0};
-      afterLogin();
+      currentUserData={password,admin:false};
+      signupForm.classList.add('hidden');
+      startGameOrAdmin();
     });
   };
 
-  // Signin
-  signinBtn.onclick=()=>{
+  // SIGNIN
+  signinBtn.onclick = ()=>{
     const username=document.getElementById('signin-username').value.trim();
     const password=document.getElementById('signin-password').value;
     if(!username||!password){signinError.textContent="All fields required!";return;}
@@ -180,90 +172,96 @@
       if(!snap.exists()){signinError.textContent="Invalid username!";return;}
       const data=snap.val();
       if(data.password!==password){signinError.textContent="Wrong password!";return;}
-      currentUser=username; currentUserData=data;
-      afterLogin();
+      currentUser=username;
+      currentUserData=data;
+      startGameOrAdmin();
     });
   };
 
-  // Logout
-  logoutBtn.onclick=logoutAdminBtn.onclick=()=>{
-    currentUser=null; currentUserData=null;
-    authSection.classList.remove('hidden');
-    gameSection.classList.add('hidden');
-    leaderboardSection.classList.add('hidden');
-    adminSection.classList.add('hidden');
-    battleMessage.textContent='';
-    mathProblem.textContent='';
-  };
-
-  function afterLogin(){
+  function startGameOrAdmin(){
     authSection.classList.add('hidden');
+    if(currentUserData.admin) adminSection.classList.remove('hidden');
     gameSection.classList.remove('hidden');
-    leaderboardSection.classList.remove('hidden');
-    if(currentUserData.admin || currentUserData.owner) adminSection.classList.remove('hidden');
-    playerHP=100; npcHP=100; updateBars(); generateProblem();
-    loadLeaderboard(); if(currentUserData.admin) loadUsers();
   }
 
-  // Game logic
-  function updateBars(){playerHealthBar.style.width=playerHP+"%";npcHealthBar.style.width=npcHP+"%";}
+  // LOGOUT
+  logoutBtn.onclick = logoutAdminBtn.onclick = ()=>{
+    currentUser=null; currentUserData=null;
+    gameSection.classList.add('hidden');
+    adminSection.classList.add('hidden');
+    authSection.classList.remove('hidden');
+  };
+
+  // GAME LOGIC
+  function startBattle(){
+    playerHP=100; npcHP=100; updateBars(); generateProblem();
+    battleMessage.textContent="";
+  }
+  startBattleBtn.onclick=startBattle;
+
+  function updateBars(){playerHealthBar.style.width=playerHP+"%"; npcHealthBar.style.width=npcHP+"%";}
   function generateProblem(){
-    const a=Math.floor(Math.random()*20+1),b=Math.floor(Math.random()*20+1);
+    const a=Math.floor(Math.random()*20+1), b=Math.floor(Math.random()*20+1);
     currentAnswer=a+b;
     mathProblem.textContent=`${a} + ${b} = ?`;
   }
 
-  startBattleBtn.onclick=()=>{
-    playerHP=100; npcHP=100; updateBars(); generateProblem(); battleMessage.textContent='Battle started!';
-  };
-
-  submitAnswer?.addEventListener('click',()=>{
-    const ans=Number(answerInput.value);
-    if(ans===currentAnswer){npcHP=Math.max(0,npcHP-10);battleMessage.textContent="Correct! You hit NPC!";currentUserData.score+=10;}
-    else{playerHP=Math.max(0,playerHP-10);battleMessage.textContent="Wrong! NPC hits you!";}
-    updateBars(); answerInput.value=""; generateProblem();
-    if(playerHP===0||npcHP===0){battleMessage.textContent=playerHP>npcHP?"You Won!":"You Lost!"; syncScore();}
+  answerInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter') submitAnswerFunc();
   });
 
-  function syncScore(){db.ref('users/'+currentUser+'/score').set(currentUserData.score); loadLeaderboard();}
-
-  // Leaderboard
-  function loadLeaderboard(){
-    db.ref('users').orderByChild('score').limitToLast(10).get().then(snap=>{
-      const arr=[];
-      snap.forEach(c=>arr.push({user:c.key,score:c.val().score||0}));
-      arr.reverse();
-      leaderboardBody.innerHTML=arr.length?arr.map(u=>`<tr><td>${u.user}</td><td>${u.score}</td>`).join(''):`<tr><td colspan="2">No one on top. Be the First person to be on top of the leaderboard!</td></tr>`;
-    });
+  function submitAnswerFunc(){
+    const ans=Number(answerInput.value);
+    if(ans===currentAnswer){npcHP=Math.max(0,npcHP-10);battleMessage.textContent="Correct! You hit the NPC!";}
+    else{playerHP=Math.max(0,playerHP-10);battleMessage.textContent="Wrong! NPC hits you!";}
+    updateBars(); answerInput.value=""; generateProblem();
+    if(playerHP===0||npcHP===0) battleMessage.textContent=playerHP>npcHP?"You Won!":"You Lost!";
+    db.ref('gameState/'+currentUser).set({playerHP,npcHP});
   }
-
-  toggleLeaderboardBtn.onclick=()=>leaderboardSection.classList.toggle('hidden');
-  resetLeaderboardBtn.onclick=()=>{
-    if(confirm("Reset leaderboard?")) db.ref('users').get().then(snap=>snap.forEach(c=>db.ref('users/'+c.key+'/score').set(0)));
-    loadLeaderboard();
+  startBattleBtn.onclick=()=>{
+    generateProblem();
+    updateBars();
+    battleMessage.textContent="Battle Started!";
   };
 
-  // Admin functions
+  // ADMIN PANEL FUNCTIONS
   function loadUsers(){
+    userListBody.innerHTML="";
     db.ref('users').get().then(snap=>{
-      userListBody.innerHTML='';
-      snap.forEach(c=>{
-        const data=c.val();
+      snap.forEach(child=>{
+        const user=child.key;
+        const data=child.val();
         const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${c.key}</td><td>${data.password}</td>
+        tr.innerHTML=`<td>${user}</td><td>${data.password}</td><td>${data.admin?'Yes':'No'}</td>
         <td>
-          <button onclick="resetPass('${c.key}')">Reset PW</button>
+          <button onclick="deleteUser('${user}')">Delete</button>
         </td>`;
         userListBody.appendChild(tr);
       });
     });
   }
-
-  window.resetPass=(u)=>{const p=prompt("New password for "+u); if(p) db.ref('users/'+u+'/password').set(p);};
-  sendBroadcastBtn.onclick=()=>{
-    const msg=broadcastInput.value.trim(); if(!msg) return;
-    db.ref('broadcast').push({message:msg,sender:currentUser}); broadcastInput.value=''; alert('Broadcast sent!');
+  refreshUsersBtn.onclick = loadUsers;
+  window.deleteUser=function(username){
+    if(confirm("Delete "+username+"?")) db.ref('users/'+username).remove();
   };
+
+  // BROADCAST
+  function showBroadcast(msg){
+    broadcastOverlay.textContent=msg;
+    broadcastOverlay.style.display='flex';
+    setTimeout(()=>{broadcastOverlay.style.display='none';},4000);
+  }
+  db.ref('broadcast').on('child_added', snap=>{
+    const data=snap.val();
+    if(currentUser) showBroadcast(`${data.sender}: ${data.message}`);
+  });
+  sendBroadcastBtn.onclick=()=>{
+    const msg=broadcastInput.value.trim();
+    if(!msg) return;
+    db.ref('broadcast').push({message:msg,sender:currentUser});
+    broadcastInput.value="";
+  };
+
 </script>
 </body>
 </html>
