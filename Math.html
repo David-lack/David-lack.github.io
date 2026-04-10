@@ -1,582 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Maths Battle Arena</title>
-<style>
-  :root{--gold:#ffffff;--btn-bg:#4b6cb7;--btn-hover:#354f7a;--card-bg:rgba(255,255,255,0.05)}
-  body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#a3c4f3;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  .card{width:360px;max-width:95vw;background:var(--card-bg);padding:20px;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.15);color:#fff;display:flex;flex-direction:column;gap:10px;align-items:center}
-  h1{margin:0;color:var(--gold);text-shadow:0 1px 4px #222}
-  input,select,button{width:100%;max-width:280px;padding:10px;border-radius:8px;border:1px solid #888;background:var(--btn-bg);color:var(--gold);box-sizing:border-box;font-size:14px}
-  input::placeholder{color:#ddd}
-  button{cursor:pointer;font-weight:700;transition:.15s}
-  button:hover{background:var(--btn-hover)}
-  .hidden{display:none !important}
-  .password-wrapper{position:relative;width:100%;max-width:280px}
-  .toggle-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:24px;height:24px;cursor:pointer}
-  .bars{width:100%;display:flex;gap:12px}
-  .bar{flex:1}
-  .bar-bg{background:#222c;border-radius:8px;overflow:hidden;height:16px}
-  #player-health,#npc-health{height:16px;transition:width .33s;border-radius:8px}
-  #player-health{background:linear-gradient(90deg,#e74c3c 0%,#f1c40f 100%)}
-  #npc-health{background:linear-gradient(90deg,#3498db 0%,#8e44ad 100%)}
-  #math-problem{width:100%;background:#232526;padding:10px;border-radius:8px;text-align:center;color:#fff}
-  table{width:100%;border-collapse:collapse;color:var(--gold)}
-  th,td{padding:6px;border:1px solid #888;text-align:center}
-  th{background:#2c3e50}
-  #broadcast-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);color:var(--gold);font-size:22px;padding:20px;z-index:9999;display:none}
-  .small{font-size:13px;color:#ddd}
-</style>
+  <meta charset="UTF-8">
+  <title>Ayurbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Quicksand:500,700&display=swap" rel="stylesheet">
+  <style>
+    html { box-sizing: border-box; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body {
+      background: radial-gradient(circle at 60% 25%, #fff8e8 60%, #f5e2c1 100%);
+      font-family: 'Quicksand', Arial, sans-serif;
+      color: #3b2c11;
+      margin: 0;
+      min-height: 100vh;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 480px;
+      margin: 44px auto 0;
+      padding: 0 18px 30px;
+      border-radius: 28px;
+      background: #fffaf1;
+      box-shadow: 0 8px 36px rgba(125,92,43,0.12), 0 2px 10px rgba(125,92,43,0.07);
+      position: relative;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      background: #fff8e1cc;
+      z-index: 10;
+      border-radius: 24px 24px 0 0;
+      padding-top: 10px;
+    }
+    .ayurbot-logo { display: flex; flex-direction: column; align-items: center; margin-top: 18px; margin-bottom: 6px; }
+    .ayurbot-svg { width: 59px; height: 59px; margin-bottom: 7px; filter: drop-shadow(0 1px 8px #e0c99199); }
+    h1 { text-align: center; color: #7d5c2b; font-size: 2.2em; font-weight: 700; margin: 3px 0 6px 0; letter-spacing: 0.04em; }
+    .subtitle { text-align: center; color: #b7a184; margin-bottom: 22px; font-size: 1.08em; font-weight: 500; letter-spacing: 0.02em; line-height: 1.5; }
+    .chat-window {
+      background: #f7f4eb; border-radius: 19px; padding: 16px 12px 10px 12px;
+      box-shadow: 0 2px 8px #bfa15d33; min-height: 180px; margin-bottom: 16px;
+      display: flex; flex-direction: column; gap: 9px; overflow-y: auto; max-height: 400px;
+    }
+    .chat-bubble {
+      max-width: 85%; padding: 12px 18px; margin: 10px 0;
+      border-radius: 16px 16px 16px 2px; box-shadow: 0 2px 8px #bfa15d26;
+      font-size: 1.13em; position: relative; word-break: break-word; animation: fadeInUp 0.5s;
+    }
+    .bot-bubble { background: #fff7e4; color: #a77a31; border-radius: 16px 16px 2px 16px; align-self: flex-start; border: 1.5px solid #e0c991; font-weight: 500; }
+    .user-bubble { background: #e0c991; color: #7d5c2b; border-radius: 16px 16px 16px 2px; align-self: flex-end; font-weight: 700; }
+    .chat-form { display: flex; gap: 8px; align-items: center; justify-content: center; }
+    .chat-input { flex: 1; padding: 10px 14px; border-radius: 13px; border: 1.5px solid #e0c991; font-size: 1.06em; background: #fff; }
+    .chat-send { background: #f9e5c1; color: #7d5c2b; font-weight: 700; border-radius: 13px; padding: 9px 20px; font-size: 1.02em; cursor: pointer; }
+    .clear-btn { background: #f6f3e7; color: #b7a184; font-weight: 700; border-radius: 12px; padding: 7px 14px; border: 2px solid #e0c991; margin: 12px auto 0; display: block; cursor: pointer; }
+    
+    .options-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 10px 0 14px 0;
+      max-height: 330px;
+      overflow-y: auto;
+    }
+    .option-btn {
+      background: #f9e5c1;
+      color: #7d5c2b;
+      font-weight: 700;
+      border-radius: 13px;
+      padding: 10px 12px;
+      font-size: 1em;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .option-btn:hover {
+      transform: scale(1.05);
+      background: #f7dca5;
+    }
+
+    .credits, footer { text-align: center; color: #b7a184; margin: 15px 0 7px; font-size: 1em; }
+    footer { border-top: 1px solid #e0c99155; padding-top: 7px; font-size: 0.96em; margin-top: 20px; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+  </style>
 </head>
 <body>
-
-<div id="broadcast-overlay"></div>
-
-<div id="auth-card" class="card">
-  <h1>Maths Battle Arena</h1>
-
-  <div style="display:flex;gap:10px;width:100%;justify-content:center">
-    <button id="btn-show-signin">Sign In</button>
-    <button id="btn-show-signup">Create</button>
+  <div class="container">
+    <header>
+      <div class="ayurbot-logo">
+        <svg class="ayurbot-svg" viewBox="0 0 80 80">
+          <ellipse cx="40" cy="46" rx="29" ry="24" fill="#e0c991" stroke="#ba9b61" stroke-width="2"/>
+          <ellipse cx="40" cy="34" rx="18" ry="15" fill="#fff7e4" stroke="#b7a184" stroke-width="1.5"/>
+          <ellipse cx="32" cy="42" rx="3.5" ry="5" fill="#7d5c2b"/>
+          <ellipse cx="48" cy="42" rx="3.5" ry="5" fill="#7d5c2b"/>
+          <ellipse cx="40" cy="52" rx="6" ry="3" fill="#b7a184"/>
+          <ellipse cx="40" cy="26" rx="7" ry="4" fill="#ba9b61"/>
+          <rect x="36" y="18" width="8" height="10" rx="4" fill="#a77a31" stroke="#ba9b61" stroke-width="1"/>
+          <ellipse cx="40" cy="18" rx="4" ry="2" fill="#fff7e4" stroke="#b7a184" stroke-width="0.5"/>
+        </svg>
+        <h1>Ayurbot</h1>
+      </div>
+      <div class="subtitle">Welcome to Ayurbot!<br>Your friendly Ayurvedic chat assistant.<br>Ask anything about remedies or Ayurveda.</div>
+    </header>
+    <main>
+      <div class="chat-window" id="chat-window">
+        <div class="bot-bubble chat-bubble">Hi! How can I help with your well-being today?</div>
+      </div>
+      <div class="options-list" id="options-list"></div>
+      <form class="chat-form" id="chat-form">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Type your symptoms or question..." required>
+        <button type="submit" class="chat-send">Send</button>
+      </form>
+      <button class="clear-btn" id="clear-btn" type="button">Clear chat</button>
+      <div class="credits">Ayurbot — chatbot for Ayurveda.<br>Made with ❤️ for well-being.</div>
+    </main>
+    <footer>
+      &copy; 2025 Ayurbot. All rights reserved. | Remedies are for informational purposes only.
+    </footer>
   </div>
-
-  <form id="signin-form" class="hidden" onsubmit="return false;" style="width:100%;display:flex;flex-direction:column;align-items:center">
-    <input id="signin-username" placeholder="Username" autocomplete="username" />
-    <div class="password-wrapper">
-      <input id="signin-password" placeholder="Password" type="password" autocomplete="current-password" />
-      <img id="eye-signin" class="toggle-eye" src="https://cdn-icons-png.flaticon.com/512/159/159604.png" alt="eye" />
-    </div>
-    <label class="small" style="width:100%;max-width:280px;text-align:left"><input id="remember-me" type="checkbox" /> Remember Me</label>
-    <button id="btn-signin" type="button">Sign In</button>
-    <div id="signin-error" style="color:#ff7070"></div>
-  </form>
-
-  <form id="signup-form" class="hidden" onsubmit="return false;" style="width:100%;display:flex;flex-direction:column;align-items:center">
-    <input id="signup-username" placeholder="Username" autocomplete="username" />
-    <div class="password-wrapper">
-      <input id="signup-password" placeholder="Password" type="password" autocomplete="new-password" />
-      <img id="eye-signup" class="toggle-eye" src="https://cdn-icons-png.flaticon.com/512/159/159604.png" alt="eye" />
-    </div>
-    <button id="btn-signup" type="button">Create Account</button>
-    <div id="signup-error" style="color:#ff7070"></div>
-  </form>
-</div>
-
-<!-- Game card -->
-<div id="game-card" class="card hidden" style="align-items:stretch">
-  <h1 id="welcome-title" style="font-size:20px;text-align:center;margin-bottom:6px"></h1>
-
-  <div class="bars">
-    <div class="bar">
-      <div class="small" style="text-align:center">Player</div>
-      <div class="bar-bg"><div id="player-health" style="width:100%"></div></div>
-    </div>
-    <div class="bar">
-      <div class="small" style="text-align:center">NPC</div>
-      <div class="bar-bg"><div id="npc-health" style="width:100%"></div></div>
-    </div>
-  </div>
-
-  <div id="math-problem">Press Start Battle</div>
-  <input id="answer-input" placeholder="Your Answer" />
-  <button id="btn-submit" type="button">Submit Answer</button>
-  <div id="game-msg" class="small" style="min-height:22px"></div>
-
-  <select id="difficulty" style="max-width:280px">
-    <option value="easy">Easy</option>
-    <option value="medium" selected>Medium</option>
-    <option value="hard">Hard (Algebra/Calculus)</option>
-  </select>
-
-  <div style="display:flex;gap:8px">
-    <button id="btn-start">Start Battle</button>
-    <button id="btn-logout">Log Out</button>
-  </div>
-
-  <div id="admin-placeholder" style="width:100%;margin-top:8px"></div>
-  <div id="leaderboard" style="width:100%;margin-top:8px"></div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-/* ---------- Firebase init ---------- */
-const firebaseConfig = {
-  apiKey: "AIzaSyC2PqmEQE5JnupeQkhGJ_kWVts80eWtnUA",
-  authDomain: "pizza-f6116.firebaseapp.com",
-  databaseURL: "https://pizza-f6116-default-rtdb.firebaseio.com",
-  projectId: "pizza-f6116",
-  storageBucket: "pizza-f6116.appspot.com",
-  messagingSenderId: "219234227309",
-  appId: "1:219234227309:web:d4dc436930ad9b9898db64"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  const remedyOptions = [
+    { key: "headache", label: "Headache" },
+    { key: "cold", label: "Cold" },
+    { key: "indigestion", label: "Indigestion" },
+    { key: "cough", label: "Cough" },
+    { key: "fever", label: "Fever" },
+    { key: "stress", label: "Stress" },
+    { key: "constipation", label: "Constipation" },
+    { key: "acne", label: "Acne" },
+    { key: "sorethroat", label: "Sore Throat" },
+    { key: "insomnia", label: "Insomnia" },
+    { key: "fatigue", label: "Fatigue" },
+    { key: "allergy", label: "Allergy" },
+    { key: "obesity", label: "Obesity" },
+    { key: "chickenpox", label: "Chickenpox" },
+    { key: "cholera", label: "Cholera" },
+    { key: "jaundice", label: "Jaundice" },
+    { key: "thyroid", label: "Thyroid" },
+    { key: "diabetes", label: "Diabetes" },
+    { key: "anaemia", label: "Anaemia" },
+    { key: "marasmus", label: "Marasmus" },
+    { key: "kwashiorkor", label: "Kwashiorkor" },
+    { key: "scurvy", label: "Scurvy" },
+    { key: "rickets", label: "Rickets" },
+    { key: "beriberi", label: "Beriberi" },
+    { key: "nightblindness", label: "Night Blindness" },
+    { key: "malaria", label: "Malaria" },
+    { key: "measles", label: "Measles" },
+    { key: "rashes", label: "Rashes" },
+    { key: "vomitting", label: "Vomitting" },
+    { key: "asthma", label: "Asthma" },
+    { key: "arthritis", label: "Arthritis" },
+    { key: "migraine", label: "Migraine" },
+    { key: "ulcer", label: "Ulcer" },
+    { key: "dandruff", label: "Dandruff" },
+    { key: "toothache", label: "Toothache" },
+    { key: "hairfall", label: "Hair Fall" },
+    { key: "heartburn", label: "Heartburn" },
+    { key: "gastritis", label: "Gastritis" },
+    { key: "hypertension", label: "Hypertension" },
+    { key: "depression", label: "Depression" },
+    { key: "anxiety", label: "Anxiety" },
+    { key: "jointpain", label: "Joint Pain" },
+    { key: "backpain", label: "Back Pain" }
+  ];
 
-/* ---------- Seed admins (if missing) ---------- */
-const initialAdmins = {
-  "Forgotten_luffy": "Luffy@123",
-  "Death_fork": "TMKOC@123"
-};
-Object.entries(initialAdmins).forEach(([u,p])=>{
-  db.ref('users/'+u).get().then(snap=>{
-    if(!snap.exists()) db.ref('users/'+u).set({password:p});
-  }).catch(()=>{});
-});
+  const remedies = {
+    headache: "For headaches, apply a paste of sandalwood or ginger on your forehead. Drink warm water infused with tulsi leaves. 🌿",
+    cold: "Try a mix of ginger, honey, and black pepper in warm water. Steam inhalation with eucalyptus oil can help clear sinuses. 🍯🌱",
+    indigestion: "Sip warm cumin seed water or chew fresh ginger with salt before meals. 🫚",
+    cough: "Take turmeric and black pepper mixed in honey. Tulsi tea with ginger also helps. 🍵",
+    fever: "Drink a decoction of holy basil, black pepper, and ginger. Rest and hydrate. 💧",
+    stress: "Practice deep breathing, meditation, and drink ashwagandha tea. 🧘‍♂️",
+    constipation: "Eat ripe bananas, drink warm water with soaked raisins, or take triphala powder. 🥣",
+    acne: "Apply neem or turmeric paste. Drink water and avoid fried foods. 🌱",
+    sorethroat: "Gargle warm salt water, drink licorice or ginger tea. 🍵",
+    insomnia: "Massage feet with sesame oil. Drink warm milk with nutmeg. 🛌",
+    fatigue: "Drink amla juice, do yoga and pranayama. 🍏",
+    allergy: "Take turmeric with honey. Keep rooms dust-free, try nasal cleansing. 🌼",
+    obesity: "Practice yoga, brisk walk, drink lemon-honey water. Avoid fried/sweet foods. 🏃‍♂️🍋",
+    chickenpox: "Apply neem paste, bathe with neem water, drink coconut water. Consult doctor. 🌿🥥",
+    cholera: "Hydrate with ORS, drink pomegranate juice, buttermilk. Seek medical help. 💧🍶",
+    jaundice: "Use kutki, drink sugarcane juice, eat bitter gourd. Rest, avoid fatty foods. 🍃",
+    thyroid: "Eat iodine-rich foods, coconut oil, do yoga. Ashwagandha helps. 🥥🌱",
+    diabetes: "Use fenugreek, bitter gourd juice, amla. Avoid refined sugar. 🥒🍈",
+    anaemia: "Eat spinach, beetroot, dates, jaggery. Amla aids iron absorption. 🥬🍠",
+    marasmus: "Give balanced diet rich in calories, protein, nutrients. Milk, pulses, ghee help. 🥛",
+    kwashiorkor: "Add protein foods: lentils, beans, eggs, nuts. Add fruits. Seek doctor. 🥚",
+    scurvy: "Increase vitamin C foods: amla, orange, lemon, guava. 🍊",
+    rickets: "Eat calcium & vitamin D foods: milk, eggs, cheese. Get sunlight. ☀️",
+    beriberi: "Eat vitamin B1 foods: whole grains, seeds, nuts, legumes. 🌾",
+    nightblindness: "Eat vitamin A foods: carrot, spinach, mango, sweet potato. 🥕",
+    malaria: "Neem leaves, tulsi tea, cinnamon with honey, and fluids help manage symptoms. 🌿",
+    measles: "Neem bath, turmeric milk, honey water, and light foods like khichdi. 🍲",
+    rashes: "Apply sandalwood paste, neem oil, or aloe vera gel for soothing relief. 🌱",
+    vomitting: "For vomiting, suggest sipping ginger juice with honey or cumin seed water to calm the stomach naturally.",
+    asthma: "Boil tulsi leaves, black pepper, and ginger in water. Inhale steam and drink warm ginger tea regularly. 🌿",
+    arthritis: "Massage with warm sesame oil and take turmeric milk daily. Avoid cold foods. 🦵",
+    migraine: "Apply sandalwood paste to forehead, practice deep breathing, and drink ginger tea. 🌺",
+    ulcer: "Drink aloe vera juice or coconut water; avoid spicy foods. 🌴",
+    dandruff: "Apply neem oil or lemon juice mixed with coconut oil to scalp before bath. 💆‍♀️",
+    toothache: "Rinse mouth with clove oil or salt water. Chew guava leaves for relief. 🌿",
+    hairfall: "Massage scalp with bhringraj or amla oil. Eat protein and vitamin E rich foods. 💇‍♀️",
+    heartburn: "Drink cold milk or chew fennel seeds after meals. Avoid spicy food. 🥛",
+    gastritis: "Have small frequent meals. Drink tender coconut water or aloe vera juice. 🌴",
+    hypertension: "Practice meditation, eat garlic and amla. Avoid salty and fried foods. 🧘‍♂️",
+    depression: "Drink ashwagandha tea, do yoga and pranayama daily. 🌼",
+    anxiety: "Tulsi tea, breathing exercises, and warm milk with nutmeg calm the mind. ☕",
+    jointpain: "Massage with castor oil or sesame oil. Take turmeric and ginger regularly. 💪",
+    backpain: "Apply warm sesame oil, do gentle yoga stretches, and rest well. 🧘‍♀️"
+  };
 
-/* Optionally clear any historic broadcast to avoid overlay on load (user requested no broadcast at start) */
-db.ref('broadcast/latest').set('');
+  const chatWindow = document.getElementById('chat-window');
+  const chatForm = document.getElementById('chat-form');
+  const chatInput = document.getElementById('chat-input');
+  const optionsList = document.getElementById('options-list');
+  const clearBtn = document.getElementById('clear-btn');
 
-/* ---------- DOM ---------- */
-const broadcastOverlay = document.getElementById('broadcast-overlay');
-
-const authCard = document.getElementById('auth-card');
-const signinForm = document.getElementById('signin-form');
-const signupForm = document.getElementById('signup-form');
-const btnShowSignin = document.getElementById('btn-show-signin');
-const btnShowSignup = document.getElementById('btn-show-signup');
-
-const signinUserEl = document.getElementById('signin-username');
-const signinPassEl = document.getElementById('signin-password');
-const btnSignin = document.getElementById('btn-signin');
-const signinError = document.getElementById('signin-error');
-const rememberEl = document.getElementById('remember-me');
-
-const signupUserEl = document.getElementById('signup-username');
-const signupPassEl = document.getElementById('signup-password');
-const btnSignup = document.getElementById('btn-signup');
-const signupError = document.getElementById('signup-error');
-
-const gameCard = document.getElementById('game-card');
-const welcomeTitle = document.getElementById('welcome-title');
-const playerHealthEl = document.getElementById('player-health');
-const npcHealthEl = document.getElementById('npc-health');
-const mathProblemEl = document.getElementById('math-problem');
-const answerInput = document.getElementById('answer-input');
-const btnSubmit = document.getElementById('btn-submit');
-const gameMsg = document.getElementById('game-msg');
-const difficultyEl = document.getElementById('difficulty');
-const btnStart = document.getElementById('btn-start');
-const btnLogout = document.getElementById('btn-logout');
-
-const adminPlaceholder = document.getElementById('admin-placeholder');
-const leaderboardDiv = document.getElementById('leaderboard');
-
-const eyeSignin = document.getElementById('eye-signin');
-const eyeSignup = document.getElementById('eye-signup');
-
-/* ---------- State ---------- */
-let currentUser = null;
-let playerHP = 100;
-let npcHP = 100;
-let currentAnswer = null;
-let score = 0;
-
-/* ---------- Helpers ---------- */
-function show(el){ el.classList.remove('hidden'); }
-function hide(el){ el.classList.add('hidden'); }
-function setGameMsg(text){ gameMsg.textContent = text || ''; }
-function updateBars(){
-  playerHealthEl.style.width = Math.max(0,Math.min(100,playerHP)) + '%';
-  npcHealthEl.style.width = Math.max(0,Math.min(100,npcHP)) + '%';
-}
-
-/* Eye toggles */
-function setupEye(inputEl, imgEl){
-  imgEl.addEventListener('click', ()=>{
-    inputEl.type = inputEl.type === 'password' ? 'text' : 'password';
-    imgEl.src = inputEl.type === 'password'
-      ? 'https://cdn-icons-png.flaticon.com/512/159/159604.png'
-      : 'https://cdn-icons-png.flaticon.com/512/159/159605.png';
-  });
-}
-setupEye(signinPassEl, eyeSignin);
-setupEye(signupPassEl, eyeSignup);
-
-/* ---------- UI wiring ---------- */
-btnShowSignin.addEventListener('click', ()=>{
-  show(signinForm); hide(signupForm); signinError.textContent=''; signupError.textContent='';
-});
-btnShowSignup.addEventListener('click', ()=>{
-  show(signupForm); hide(signinForm); signinError.textContent=''; signupError.textContent='';
-});
-
-/* ---------- Remember-me auto-login ---------- */
-window.addEventListener('load', ()=>{
-  const remembered = localStorage.getItem('rememberedUser');
-  if(remembered){
-    db.ref('users/'+remembered).get().then(snap=>{
-      if(snap.exists()) showGameFor(remembered);
-      else localStorage.removeItem('rememberedUser');
-    }).catch(()=>{});
+  function addBubble(text, sender = "user") {
+    const bubble = document.createElement("div");
+    bubble.className = `${sender}-bubble chat-bubble`;
+    bubble.textContent = text;
+    chatWindow.appendChild(bubble);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-});
 
-/* ---------- Sign up ---------- */
-btnSignup.addEventListener('click', ()=>{
-  const u = signupUserEl.value.trim();
-  const p = signupPassEl.value.trim();
-  signupError.textContent='';
-  if(!u || !p){ signupError.textContent='Enter username and password'; return; }
-  db.ref('users/'+u).get().then(snap=>{
-    if(snap.exists()){ signupError.textContent='Username taken'; return; }
-    return db.ref('users/'+u).set({ password: p });
-  }).then(()=>{
-    // auto sign-in after signup
-    signupError.style.color = '#8cff9a';
-    signupError.textContent = 'Account created — signed in';
-    if(localStorage.getItem('rememberedUser')===u) localStorage.setItem('rememberedUser', u);
-    showGameFor(u);
-  }).catch(err=>{
-    signupError.textContent = 'Signup failed';
-  });
-});
+  function addBotBubble(text) {
+    const typingBubble = document.createElement("div");
+    typingBubble.className = "bot-bubble chat-bubble";
+    typingBubble.textContent = "Typing";
+    chatWindow.appendChild(typingBubble);
 
-/* ---------- Sign in ---------- */
-btnSignin.addEventListener('click', ()=>{
-  const u = signinUserEl.value.trim();
-  const p = signinPassEl.value.trim();
-  signinError.textContent='';
-  if(!u || !p){ signinError.textContent='Enter username and password'; return; }
-  db.ref('users/'+u).get().then(snap=>{
-    if(!snap.exists()){ signinError.textContent='No such user'; return; }
-    const pw = snap.val().password;
-    if(pw !== p){ signinError.textContent='Wrong password'; return; }
-    if(rememberEl.checked) localStorage.setItem('rememberedUser', u);
-    showGameFor(u);
-  }).catch(err=>{
-    signinError.textContent='Sign in failed';
-  });
-});
+    let dotCount = 0;
+    const dotInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4;
+      typingBubble.textContent = "Typing" + ".".repeat(dotCount);
+    }, 500);
 
-/* ---------- Logout ---------- */
-btnLogout.addEventListener('click', ()=>{
-  currentUser = null;
-  hide(gameCard);
-  show(authCard);
-  localStorage.removeItem('rememberedUser');
-});
+    setTimeout(() => {
+      clearInterval(dotInterval);
+      typingBubble.remove();
 
-/* ---------- Leaderboard (real-time listener) ---------- */
-function renderLeaderboard(snapshot){
-  const val = snapshot.val();
-  if(!val){ leaderboardDiv.innerHTML = '<div class="small">No one on top. Become the First one!</div>'; return; }
-  const entries = Object.entries(val).map(([user,data])=>{
-    // data might be {score:NUMBER} or a NUMBER; normalize
-    if(typeof data === 'number') return {user, score: data};
-    if(data && typeof data.score === 'number') return {user, score: data.score};
-    if(data && data.score) return {user, score: Number(data.score)};
-    return {user, score: 0};
-  }).sort((a,b)=>b.score - a.score);
-  let html = '<h3 style="margin:6px 0">Leaderboard</h3><table><tr><th>User</th><th>Score</th></tr>';
-  entries.forEach(e=> html += `<tr><td>${e.user}</td><td>${e.score}</td></tr>`);
-  html += '</table>';
-  leaderboardDiv.innerHTML = html;
-}
-db.ref('leaderboard').on('value', snap => renderLeaderboard(snap));
+      const bubble = document.createElement("div");
+      bubble.className = "bot-bubble chat-bubble";
+      chatWindow.appendChild(bubble);
 
-/* ---------- Save score (store numeric score) ---------- */
-function saveScore(){
-  if(!currentUser) return;
-  // write as number
-  db.ref('leaderboard/' + currentUser).set({ score });
-}
+      let i = 0;
+      function typing() {
+        if (i < text.length) {
+          bubble.textContent += text.charAt(i);
+          i++;
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+          setTimeout(typing, 35);
+        }
+      }
+      typing();
+    }, 1200);
+  }
 
-/* ---------- Broadcast listener / overlay ---------- */
-/* Owner can clear/enable admin broadcasts; when 'broadcast/latest' is set, everyone sees the overlay */
-db.ref('broadcast/latest').on('value', snap=>{
-  const msg = (snap.val() || '').toString();
-  if(msg.trim() === ''){ broadcastOverlay.style.display = 'none'; return; }
-  broadcastOverlay.textContent = msg;
-  broadcastOverlay.style.display = 'flex';
-  // hide after 5s
-  setTimeout(()=> broadcastOverlay.style.display = 'none', 5000);
-});
-
-/* ---------- Battle / problem generation ---------- */
-function generateProblem(){
-  const diff = difficultyEl.value;
-  if(diff === 'easy'){
-    const a = Math.floor(Math.random()*10)+1;
-    const b = Math.floor(Math.random()*10)+1;
-    const ops = ['+','-','*'];
-    const op = ops[Math.floor(Math.random()*ops.length)];
-    currentAnswer = eval(`${a}${op}${b}`);
-    mathProblemEl.textContent = `${a} ${op} ${b} = ?`;
-  } else if(diff === 'medium'){
-    const a = Math.floor(Math.random()*50)+1;
-    const b = Math.floor(Math.random()*50)+1;
-    const ops = ['+','-','*'];
-    const op = ops[Math.floor(Math.random()*ops.length)];
-    currentAnswer = eval(`${a}${op}${b}`);
-    mathProblemEl.textContent = `${a} ${op} ${b} = ?`;
-  } else {
-    // Hard: alternates algebra and derivative style
-    if(Math.random() < 0.5){
-      const x = Math.floor(Math.random()*10)+1;
-      const c = Math.floor(Math.random()*10)+1;
-      currentAnswer = x;
-      mathProblemEl.textContent = `x + ${c} = ${x + c} , solve x`;
-    } else {
-      const n = Math.floor(Math.random()*10)+1;
-      currentAnswer = 2 * n;
-      mathProblemEl.textContent = `d/dx of x^2 + ${n} = ?`;
+  function ayurbotReply(input) {
+    input = input.toLowerCase();
+    for (const key in remedies) {
+      if (input.includes(key)) return remedies[key];
+      if (key === "sorethroat" && (input.includes("sore throat") || input.includes("throat pain"))) return remedies[key];
+      if (key === "chickenpox" && input.includes("chicken pox")) return remedies[key];
+      if (key === "beriberi" && (input.includes("beri beri") || input.includes("beri-beri"))) return remedies[key];
     }
-  }
-}
-
-/* Start battle */
-btnStart.addEventListener('click', ()=>{
-  playerHP = 100; npcHP = 100; score = 0;
-  updateBars(); setGameMsg('');
-  generateProblem();
-  answerInput.value = '';
-  btnSubmit.disabled = false;
-});
-
-/* Submit answer and handle turns:
-   Player turn -> NPC turn (guess) */
-btnSubmit.addEventListener('click', ()=>{
-  const ansText = answerInput.value.trim();
-  const parsed = parseFloat(ansText);
-  if(ansText === '' || isNaN(parsed)){ setGameMsg('Enter a valid number'); return; }
-
-  // PLAYER TURN
-  if(parsed === currentAnswer){
-    npcHP -= 10;
-    score += 10;
-    setGameMsg('Correct! You hit the NPC for 10 HP.');
-  } else {
-    // NPC attempt to hit player (70% hit chance)
-    if(Math.random() < 0.7){
-      playerHP -= 10;
-      setGameMsg('Wrong! NPC hit you for 10 HP.');
-    } else {
-      setGameMsg('Wrong! NPC missed.');
-    }
-  }
-  updateBars();
-
-  // Check for end after player's action
-  if(playerHP <= 0){
-    setGameMsg('You lost!'); btnSubmit.disabled = true; saveScore(); return;
-  }
-  if(npcHP <= 0){
-    setGameMsg('You won!'); btnSubmit.disabled = true; saveScore(); return;
+    if (/hi|hello|hey/.test(input)) return "Namaste! Share your symptoms and I'll suggest an Ayurvedic remedy. 🙏";
+    if (/thank/.test(input)) return "You're welcome! Stay healthy with Ayurveda. 🌿";
+    return "Sorry, I don't know a remedy for that. Please consult a qualified doctor for proper advice. 🙏";
   }
 
-  // NPC TURN (guess)
-  const npcGuessedCorrect = Math.random() < 0.5; // 50% chance
-  if(npcGuessedCorrect){
-    playerHP -= 10;
-    setGameMsg(prev => {}); // keep message, then append
-    gameMsg.textContent += ' NPC answered correctly! You lose 10 HP.';
-  } else {
-    npcHP -= 10;
-    score += 5; // bonus when NPC misses
-    gameMsg.textContent += ' NPC answered wrong! NPC loses 10 HP.';
-  }
-  updateBars();
-
-  // Check end after npc turn
-  if(playerHP <= 0){ setGameMsg('You lost!'); btnSubmit.disabled = true; saveScore(); return; }
-  if(npcHP <= 0){ setGameMsg('You won!'); btnSubmit.disabled = true; saveScore(); return; }
-
-  // continue
-  generateProblem();
-  answerInput.value = '';
-});
-
-/* ---------- Admin panel & permissions ---------- */
-function setupAdminPanel(){
-  adminPlaceholder.innerHTML = ''; // clear
-
-  const ownersAdmins = ['David_lack','Forgotten_luffy','Death_fork'];
-  if(!ownersAdmins.includes(currentUser)) return; // ordinary users see nothing
-
-  const panel = document.createElement('div');
-  panel.style.width='100%';
-  panel.style.display='flex';
-  panel.style.flexDirection='column';
-  panel.style.gap='8px';
-  panel.innerHTML = `<div style="font-weight:700;color:var(--gold);text-align:center">Admin Panel</div>`;
-  adminPlaceholder.appendChild(panel);
-
-  // Reset leaderboard button - only owner can use
-  const resetBtn = document.createElement('button');
-  resetBtn.textContent = 'Reset Leaderboard';
-  panel.appendChild(resetBtn);
-  if(currentUser !== 'David_lack') resetBtn.style.display = 'none';
-  else resetBtn.addEventListener('click', ()=>{
-    if(confirm('Reset leaderboard for everyone?')) db.ref('leaderboard').remove();
+  chatForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+    addBubble(text, "user");
+    chatInput.value = "";
+    const reply = ayurbotReply(text);
+    addBotBubble(reply);
   });
 
-  // Owner broadcast toggle button (styled like other buttons)
-  if(currentUser === 'David_lack'){
-    const ownerBroadcastBtn = document.createElement('button');
-    ownerBroadcastBtn.textContent = 'Enable Admin Broadcast';
-    ownerBroadcastBtn.style.marginTop = '4px';
-    panel.appendChild(ownerBroadcastBtn);
-
-    // set initial label by reading state
-    db.ref('broadcast/admin_enabled').get().then(snap=>{
-      const state = !!snap.val();
-      ownerBroadcastBtn.textContent = state ? 'Disable Admin Broadcast' : 'Enable Admin Broadcast';
-    }).catch(()=>{});
-
-    ownerBroadcastBtn.addEventListener('click', ()=>{
-      db.ref('broadcast/admin_enabled').get().then(snap=>{
-        const state = !!snap.val();
-        db.ref('broadcast/admin_enabled').set(!state).then(()=>{
-          ownerBroadcastBtn.textContent = (!state) ? 'Disable Admin Broadcast' : 'Enable Admin Broadcast';
-        });
+  function renderOptions() {
+    optionsList.innerHTML = "";
+    remedyOptions.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        addBubble(opt.label, "user");
+        const reply = ayurbotReply(opt.key);
+        addBotBubble(reply);
       });
-    });
-
-    // Also owner can send a broadcast directly
-    const ownerBroadcastSendWrap = document.createElement('div');
-    ownerBroadcastSendWrap.style.display='flex';
-    ownerBroadcastSendWrap.style.gap='6px';
-    ownerBroadcastSendWrap.style.justifyContent='center';
-    ownerBroadcastSendWrap.style.marginTop='6px';
-    ownerBroadcastSendWrap.innerHTML = `<input id="owner-broadcast-input" placeholder="Broadcast message" style="flex:1;max-width:none" /><button id="owner-broadcast-send">Send Broadcast</button>`;
-    panel.appendChild(ownerBroadcastSendWrap);
-
-    panel.querySelector('#owner-broadcast-send').addEventListener('click', ()=>{
-      const msg = panel.querySelector('#owner-broadcast-input').value.trim();
-      if(!msg) return;
-      db.ref('broadcast/latest').set(msg);
-      panel.querySelector('#owner-broadcast-input').value = '';
+      optionsList.appendChild(btn);
     });
   }
+  renderOptions();
 
-  // Accounts table (owner sees all, other admins see ordinary users only)
-  const accountsTitle = document.createElement('div');
-  accountsTitle.style.marginTop='8px';
-  accountsTitle.innerHTML = `<div style="font-weight:700;color:var(--gold)">Accounts</div>`;
-  panel.appendChild(accountsTitle);
-
-  const table = document.createElement('table');
-  table.style.marginTop = '6px';
-  table.innerHTML = `<tr><th>Username</th><th>Password</th><th>Action</th></tr>`;
-  panel.appendChild(table);
-
-  // Listen to users node
-  const ownersSet = new Set(ownersAdmins);
-  db.ref('users').on('value', snapshot => {
-    table.innerHTML = `<tr><th>Username</th><th>Password</th><th>Action</th></tr>`;
-    snapshot.forEach(child=>{
-      const uname = child.key;
-      const pwd = (child.val() && child.val().password) ? child.val().password : '';
-      const isAdmin = ownersSet.has(uname);
-
-      // Visibility rules:
-      // - Owner sees all rows and full passwords
-      // - Other admins see ordinary users only (they do not see other admins or owner rows)
-      if(currentUser !== 'David_lack' && isAdmin && uname !== currentUser){
-        // skip showing other admins (only show themselves)
-        return;
-      }
-
-      // Password display rules:
-      // - Owner sees full
-      // - Other admins see ordinary users' passwords
-      // - For admin's own row, hide password (or show masked) — we mask self for safety
-      let pwdDisplay = '*****';
-      if(currentUser === 'David_lack') pwdDisplay = pwd;
-      else if(!isAdmin) pwdDisplay = pwd;
-      else if(uname === currentUser) pwdDisplay = '*****';
-
-      // Delete button rules:
-      // - Owner can delete anybody
-      // - Other admins (Forgotten_luffy / Death_fork) can delete ordinary users only (not owner, not other admins)
-      let canDelete = false;
-      if(currentUser === 'David_lack') canDelete = true;
-      else if((currentUser === 'Forgotten_luffy' || currentUser === 'Death_fork') && !isAdmin) canDelete = true;
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${uname}</td><td>${pwdDisplay}</td><td>${canDelete ? '<button class="btn-del" data-user="'+uname+'">Delete</button>' : ''}</td>`;
-      table.appendChild(tr);
-    });
-
-    // wire delete buttons
-    table.querySelectorAll('.btn-del').forEach(btn=>{
-      btn.onclick = () => {
-        const toDel = btn.dataset.user;
-        if(!toDel) return;
-        // double-check permissions before actually deleting (defense in depth)
-        db.ref('users/'+toDel).get().then(snap=>{
-          if(!snap.exists()) return alert('User not found');
-          const isAdminTarget = ownersSet.has(toDel);
-          if(currentUser === 'David_lack'){
-            if(confirm(`Delete account ${toDel}? This will also remove from leaderboard.`)){
-              db.ref('users/'+toDel).remove();
-              db.ref('leaderboard/'+toDel).remove();
-            }
-          } else {
-            // other admins can only delete ordinary users
-            if(isAdminTarget) return alert('You cannot delete owners or other admins.');
-            if(confirm(`Delete account ${toDel}? This will also remove from leaderboard.`)){
-              db.ref('users/'+toDel).remove();
-              db.ref('leaderboard/'+toDel).remove();
-            }
-          }
-        });
-      };
-    });
+  clearBtn.addEventListener('click', () => {
+    chatWindow.innerHTML = '<div class="bot-bubble chat-bubble">Hi! How can I help with your well-being today?</div>';
   });
-
-  // Admin broadcast: if currentUser is an admin (not owner), they can send only if owner enabled admin broadcasts
-  if(currentUser === 'Forgotten_luffy' || currentUser === 'Death_fork'){
-    db.ref('broadcast/admin_enabled').get().then(snap=>{
-      const allowed = !!snap.val();
-      if(allowed){
-        const wrap = document.createElement('div');
-        wrap.style.marginTop='8px';
-        wrap.style.display='flex';
-        wrap.style.gap='6px';
-        wrap.innerHTML = `<input id="admin-bc-input" placeholder="Broadcast message" style="flex:1;max-width:none" /><button id="admin-bc-send">Send Broadcast</button>`;
-        panel.appendChild(wrap);
-        panel.querySelector('#admin-bc-send').onclick = ()=>{
-          const m = panel.querySelector('#admin-bc-input').value.trim();
-          if(!m) return;
-          db.ref('broadcast/latest').set(m);
-          panel.querySelector('#admin-bc-input').value = '';
-        };
-      } else {
-        // show info that owner must enable
-        const note = document.createElement('div');
-        note.className = 'small';
-        note.style.marginTop='8px';
-        note.textContent = 'Admin Broadcasts are disabled by owner.';
-        panel.appendChild(note);
-      }
-    });
-  }
-}
-
-/* ---------- Show game for user ---------- */
-function showGameFor(username){
-  currentUser = username;
-  hide(authCard);
-  show(gameCard);
-  welcomeTitle.textContent = `Welcome, ${username}!`;
-  playerHP = 100; npcHP = 100; score = 0;
-  updateBars();
-  setGameMsg('');
-  // build admin panel according to permissions
-  setupAdminPanel();
-  // ensure leaderboard visible (listener already active)
-  // no further action required
-}
-
-/* ---------- Final: ensure no blank screen on load ---------- */
-hide(gameCard);
-show(authCard);
-
-/* ---------- End of script ---------- */
 </script>
 </body>
 </html>
