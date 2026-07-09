@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aura check // crafted edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#0b1330;
+    --sky-mid:#1c2c55;
+    --sky-low:#3a2b52;
+    --grass:#5fae3d;
+    --grass-dark:#4a8c30;
+    --dirt:#7a4a2b;
+    --dirt-dark:#5e3820;
+    --stone:#8a8a8a;
+    --stone-dark:#565656;
+    --panel:#c6c6c6;
+    --panel-dark:#8b8b8b;
+    --panel-light:#ffffff;
+    --ink:#f4f4f4;
+    --gold:#ffd76b;
+    --torch:#ff9d3c;
+    --emerald:#39c98a;
+    --enchant-a:#c586ff;
+    --enchant-b:#66e0ff;
+    --shadow:#000000;
+    --xp-fill:#5fe23a;
+    --xp-fill-dark:#3f9c22;
+    --xp-track:#1c1c1c;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+
+  body{
+    font-family:'VT323', monospace;
+    color:var(--ink);
+    background: var(--sky-top);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow-x:hidden;
+    image-rendering: pixelated;
+    padding:8vh 5vw 0;
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><g fill='%23c9902a' stroke='%233a2413' stroke-width='1'><rect x='2' y='16' width='4' height='4'/><rect x='6' y='12' width='4' height='4'/><rect x='10' y='8' width='4' height='4'/><rect x='14' y='4' width='4' height='4' fill='%23bfbfbf'/><rect x='17' y='1' width='4' height='4' fill='%23e6e6e6'/></g></svg>") 2 20, auto;
+  }
+
+  .sky-layer{
+    position:fixed;
+    inset:0;
+    z-index:-3;
+    animation: cycleSky 42s linear infinite;
+  }
+
+  .celestial{
+    position:fixed;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    z-index:-2;
+    pointer-events:none;
+    animation: arcMotion 42s linear infinite;
+  }
+  .sun{
+    background: radial-gradient(circle at 35% 32%, #fff8da, #ffd76b 55%, #ff9d3c 100%);
+    box-shadow: 0 0 28px 12px rgba(255,215,107,0.4);
+  }
+  .moon{
+    background: radial-gradient(circle at 35% 32%, #f7f8ff, #d3d9f7 55%, #9aa5d9 100%);
+    box-shadow: 0 0 22px 10px rgba(180,190,255,0.3);
+    animation-delay: -21s;
+  }
+
+  /* pixel stars */
+  #stars{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    animation: starsFade 42s linear infinite;
+  }
+
+  /* blocky hill silhouette anchored to bottom of viewport */
+  .terrain{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    height:26vh;
+    min-height:150px;
+    z-index:1;
+    pointer-events:none;
+    display:flex;
+    align-items:flex-end;
+  }
+  .col{
+    flex:1;
+    background:
+      linear-gradient(var(--grass) 0 18%, var(--grass-dark) 18% 22%, var(--dirt) 22% 78%, var(--dirt-dark) 78% 100%);
+    box-shadow: inset -3px 0 0 rgba(0,0,0,0.15);
+  }
+
+  main{
+    position:relative;
+    z-index:2;
+    width:100%;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:1.6rem;
+    padding-bottom:22vh;
+  }
+
+  /* torches */
+  .torch{
+    position:absolute;
+    top:-1.4rem;
+    width:14px;
+    height:34px;
+    background: linear-gradient(#6b4a2a, #3a2413);
+    box-shadow: 4px 4px 0 var(--shadow);
+  }
+  .torch.left{ left:-2.4rem; }
+  .torch.right{ right:-2.4rem; }
+  .torch::before{
+    content:"";
+    position:absolute;
+    top:-10px; left:1px;
+    width:12px; height:12px;
+    background: var(--torch);
+    box-shadow: 0 0 0 4px rgba(255,157,60,0.15), 0 0 24px 10px rgba(255,157,60,0.35);
+    animation: flicker 1.6s infinite steps(4);
+  }
+
+  .name-wrap{
+    position:relative;
+    display:inline-block;
+    padding:0.4rem 1rem;
+  }
+  .eyebrow{
+    font-family:'Press Start 2P', monospace;
+    font-size:0.5rem;
+    letter-spacing:0.12em;
+    color:var(--gold);
+    text-shadow: 2px 2px 0 var(--shadow);
+    margin-bottom:0.8rem;
+  }
+  .name{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(1.3rem, 5.5vw, 2rem);
+    line-height:1.5;
+    color:#ffffff;
+    text-shadow:
+      3px 3px 0 var(--shadow),
+      3px 3px 0 var(--shadow);
+    position:relative;
+  }
+
+  /* sign / plaque holding the aura score, like a crafting table panel */
+  .panel{
+    width:100%;
+    background:var(--panel);
+    border: 4px solid var(--stone-dark);
+    box-shadow:
+      inset 3px 3px 0 var(--panel-light),
+      inset -3px -3px 0 var(--panel-dark),
+      6px 6px 0 var(--shadow);
+    padding:1.6rem 1.2rem 1.8rem;
+    color:#262626;
+  }
+  .panel-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:0.55rem;
+    letter-spacing:0.08em;
+    color:#4a4a4a;
+    margin-bottom:0.9rem;
+  }
+  .score{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(1.1rem, 6.2vw, 1.9rem);
+    line-height:1.4;
+    word-break:break-word;
+    background: linear-gradient(100deg, var(--enchant-a), var(--enchant-b), var(--enchant-a));
+    background-size:300% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    text-shadow: none;
+    animation: shimmer 5s ease-in-out infinite;
+    letter-spacing:0.02em;
+    position:relative;
+  }
+  .score-sub{
+    margin-top:0.8rem;
+    font-size:1.05rem;
+    color:#4a4a4a;
+  }
+  .score-sub span{ color:var(--emerald); font-weight:bold; }
+
+  .xp-wrap{
+    position:relative;
+    width:100%;
+    margin-top:1.1rem;
+    padding-top:0.9rem;
+  }
+  .xp-level{
+    position:absolute;
+    top:-0.3rem;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:'Press Start 2P', monospace;
+    font-size:0.6rem;
+    color:var(--xp-fill);
+    -webkit-text-stroke: 3px #1a1a1a;
+    paint-order: stroke fill;
+    z-index:2;
+  }
+  .xp-track{
+    width:100%;
+    height:14px;
+    background: var(--xp-track);
+    border:2px solid #000;
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.08);
+    overflow:hidden;
+  }
+  .xp-fill{
+    height:100%;
+    width:0%;
+    background: repeating-linear-gradient(90deg, var(--xp-fill) 0 6px, var(--xp-fill-dark) 6px 12px);
+    animation: fillXP 2.2s 1.6s ease-out both;
+  }
+  @keyframes fillXP{
+    from{ width:0%; }
+    to{ width:93%; }
+  }
+
+  #achievement{
+    position:fixed;
+    top:1.2rem;
+    left:50%;
+    transform: translate(-50%, -140%);
+    z-index:10;
+    display:flex;
+    align-items:center;
+    gap:0.75rem;
+    background:#1a1a1acc;
+    border:3px solid #4a4a4a;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.15), 5px 5px 0 var(--shadow);
+    padding:0.6rem 1rem;
+    transition: transform 0.5s steps(6);
+    pointer-events:none;
+  }
+  #achievement.show{ transform: translate(-50%, 0); }
+  #achievement .ach-icon{
+    width:30px; height:30px;
+    background: linear-gradient(#ffe37a, #ffc23c);
+    border:2px solid #8a5a00;
+    flex:0 0 auto;
+  }
+  #achievement .ach-text{ text-align:left; line-height:1.25; }
+  #achievement .ach-title{ font-family:'Press Start 2P', monospace; font-size:0.55rem; color:var(--gold); }
+  #achievement .ach-sub{ font-size:1rem; color:#d8d8d8; }
+
+  .tagline{
+    font-size:1.15rem;
+    color:#d8d8e6;
+    max-width:36ch;
+    line-height:1.5;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+  }
+
+  /* inventory-slot style link buttons */
+  .links{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:0.75rem;
+  }
+  .link{
+    --accent: var(--emerald);
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:0.9rem;
+    padding:0.75rem 0.9rem;
+    text-decoration:none;
+    color:#f4f4f4;
+    text-align:left;
+    background: var(--stone);
+    border:3px solid var(--stone-dark);
+    box-shadow:
+      inset 2px 2px 0 rgba(255,255,255,0.25),
+      inset -2px -2px 0 rgba(0,0,0,0.35),
+      5px 5px 0 var(--shadow);
+    transition: transform 0.12s steps(2), box-shadow 0.12s steps(2);
+  }
+  .link:hover, .link:focus-visible{
+    transform: translate(2px, 2px);
+    box-shadow:
+      inset 2px 2px 0 rgba(255,255,255,0.25),
+      inset -2px -2px 0 rgba(0,0,0,0.35),
+      3px 3px 0 var(--shadow);
+    outline:none;
+  }
+  .link:focus-visible{ box-shadow: 0 0 0 3px var(--accent), 3px 3px 0 var(--shadow); }
+
+  .slot{
+    flex:0 0 auto;
+    width:40px; height:40px;
+    background: #3d3d3d;
+    border:2px solid #1f1f1f;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.08);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--accent);
+  }
+  .slot svg{ width:22px; height:22px; shape-rendering: crispEdges; }
+
+  .text{ flex:1; display:flex; flex-direction:column; gap:0.05rem; }
+  .platform{ font-family:'Press Start 2P', monospace; font-size:0.62rem; text-shadow:1px 1px 0 rgba(0,0,0,0.6); }
+  .handle{ font-size:0.95rem; color:#d0d0d0; }
+  .arrow{ color:#cfcfcf; font-size:1.1rem; }
+
+  .rb{ --accent:#e0e0e0; }
+  .ig{ --accent:#ff8fc0; }
+  .yt{ --accent:#ff6b6b; }
+  .sp{ --accent:#39c98a; }
+
+  footer{
+    margin-top:0.4rem;
+    font-size:0.85rem;
+    color:#7f89b0;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  }
+
+  @keyframes flicker{
+    0%{ opacity:1; } 25%{ opacity:0.7; } 50%{ opacity:1; } 75%{ opacity:0.8; } 100%{ opacity:1; }
+  }
+  @keyframes shimmer{
+    0%,100%{ background-position:0% 50%; }
+    50%{ background-position:100% 50%; }
+  }
+  @keyframes cycleSky{
+    0%   { background: linear-gradient(#0b1330, #1c2c55 55%, #3a2b52 100%); }
+    18%  { background: linear-gradient(#2b355e, #6f4f7a 55%, #d98a5f 100%); }
+    50%  { background: linear-gradient(#4fa8e0, #8ecbef 55%, #cdeeff 100%); }
+    82%  { background: linear-gradient(#2e2856, #6a3f6e 55%, #e0703f 100%); }
+    100% { background: linear-gradient(#0b1330, #1c2c55 55%, #3a2b52 100%); }
+  }
+  @keyframes starsFade{
+    0%{ opacity:1; }
+    18%{ opacity:0.35; }
+    40%{ opacity:0; }
+    60%{ opacity:0; }
+    82%{ opacity:0.35; }
+    100%{ opacity:1; }
+  }
+  @keyframes arcMotion{
+    0%   { left:-8%;  top:62%; opacity:1; }
+    20%  { left:50%;  top:2%;  opacity:1; }
+    42%  { left:100%; top:58%; opacity:0.25; }
+    46%  { left:105%; top:62%; opacity:0; }
+    99%  { left:105%; top:62%; opacity:0; }
+    100% { left:-8%;  top:62%; opacity:1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+
+  .placed-block{
+    position:fixed;
+    width:22px;
+    height:22px;
+    z-index:1;
+    pointer-events:none;
+    border:2px solid rgba(0,0,0,0.4);
+    animation: popBlock 0.18s steps(3) both, settleBlock 3.6s 0.18s forwards;
+  }
+  @keyframes popBlock{
+    0%{ transform: scale(0.2); }
+    100%{ transform: scale(1); }
+  }
+  @keyframes settleBlock{
+    0%{ opacity:1; }
+    80%{ opacity:1; }
+    100%{ opacity:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky-layer"></div>
+<div class="celestial sun"></div>
+<div class="celestial moon"></div>
+<canvas id="stars"></canvas>
+<div class="terrain" id="terrain"></div>
+
+<div id="achievement">
+  <span class="ach-icon"></span>
+  <span class="ach-text">
+    <span class="ach-title">ACHIEVEMENT GET!</span>
+    <span class="ach-sub">Visited Sage's World</span>
+  </span>
+</div>
+
+<main>
+  <div class="name-wrap">
+    <span class="torch left"></span>
+    <div class="eyebrow">// aura check</div>
+    <h1 class="name" id="displayName">SAGE</h1>
+    <span class="torch right"></span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">CURRENT AURA</div>
+    <div class="score" id="auraScore">0</div>
+    <div class="score-sub"><span id="auraDelta">+0</span> today · fully enchanted</div>
+    <div class="xp-wrap">
+      <span class="xp-level">LVL 999</span>
+      <div class="xp-track"><div class="xp-fill"></div></div>
+    </div>
+  </div>
+
+  <p class="tagline">sage's world. certified high-aura crafter, respawn point set to legendary. links below, don't grief.</p>
+
+  <nav class="links">
+    <a class="link rb" href="https://www.roblox.com/users/9631888043/profile" target="_blank" rel="noopener">
+      <span class="slot">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3.2 4.3l8.5-1.5 1.5 8.5-8.5 1.5-1.5-8.5z"/><path d="M6 6.2l4 -0.7 0.7 4 -4 0.7 -0.7-4z" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="text">
+        <span class="platform">ROBLOX</span>
+        <span class="handle">view profile</span>
+      </span>
+      <span class="arrow">&#9654;</span>
+    </a>
+
+    <a class="link ig" href="https://www.instagram.com/sagemode_404" target="_blank" rel="noopener">
+      <span class="slot">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="12" height="12"/><rect x="5" y="5" width="6" height="6"/><rect x="10.5" y="3.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="text">
+        <span class="platform">INSTAGRAM</span>
+        <span class="handle">@sagemode_404</span>
+      </span>
+      <span class="arrow">&#9654;</span>
+    </a>
+
+    <a class="link yt" href="https://www.youtube.com/@manikamajumdarsaha-wv2nd" target="_blank" rel="noopener">
+      <span class="slot">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3.5" width="13" height="9"/><path d="M6.5 6.5l4 2-4 2v-4z" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="text">
+        <span class="platform">YOUTUBE</span>
+        <span class="handle">@manikamajumdarsaha-wv2nd</span>
+      </span>
+      <span class="arrow">&#9654;</span>
+    </a>
+
+    <a class="link sp" href="https://open.spotify.com/user/31adn64u7f3chk5tij6xblmgixzq?si=f7EKdRR6Q5iHbo-nZockkA&nd=1&dlsi=5cff3c432b82476a" target="_blank" rel="noopener">
+      <span class="slot">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="1.5" width="13" height="13"/><path d="M4 6.5c2.5-.8 5.5-.5 7.5.7M4 9c2-.6 4.5-.4 6.2.6M4 11.3c1.6-.5 3.5-.3 4.8.5"/></svg>
+      </span>
+      <span class="text">
+        <span class="platform">SPOTIFY</span>
+        <span class="handle">view profile</span>
+      </span>
+      <span class="arrow">&#9654;</span>
+    </a>
+  </nav>
+
+  <footer>world saved automatically // aura synced hourly</footer>
+</main>
+
+<script>
+  /* pixel stars */
+  const starCanvas = document.getElementById('stars');
+  const sctx = starCanvas.getContext('2d');
+  function drawStars(){
+    starCanvas.width = window.innerWidth;
+    starCanvas.height = window.innerHeight;
+    sctx.clearRect(0,0,starCanvas.width, starCanvas.height);
+    const count = Math.floor((starCanvas.width*starCanvas.height)/9000);
+    for(let i=0;i<count;i++){
+      const x = Math.random()*starCanvas.width;
+      const y = Math.random()*starCanvas.height*0.7;
+      const s = Math.random() < 0.15 ? 2 : 1;
+      sctx.fillStyle = `rgba(255,255,255,${0.3 + Math.random()*0.6})`;
+      sctx.fillRect(x, y, s, s);
+    }
+  }
+  drawStars();
+  window.addEventListener('resize', drawStars);
+
+  /* blocky terrain columns */
+  const terrain = document.getElementById('terrain');
+  function buildTerrain(){
+    terrain.innerHTML = '';
+    const colWidth = 26;
+    const cols = Math.ceil(window.innerWidth / colWidth) + 2;
+    for(let i=0;i<cols;i++){
+      const c = document.createElement('div');
+      c.className = 'col';
+      const h = 60 + Math.round(Math.sin(i*0.7)*10) + (Math.random()*8);
+      c.style.height = h + '%';
+      terrain.appendChild(c);
+    }
+  }
+  buildTerrain();
+  window.addEventListener('resize', buildTerrain);
+
+  /* aura count-up with an enchant-table style scramble */
+  const target = 999999999;
+  const scoreEl = document.getElementById('auraScore');
+  const deltaEl = document.getElementById('auraDelta');
+  const glyphs = '!@#$%&*?<>+=~^';
+  function randomGlyphs(len){
+    let s = '';
+    for(let i=0;i<len;i++) s += glyphs[Math.floor(Math.random()*glyphs.length)];
+    return s;
+  }
+  function format(n){ return Math.floor(n).toLocaleString('en-US') + '+'; }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let start = null;
+  const duration = 1500;
+  function countUp(ts){
+    if(!start) start = ts;
+    const p = Math.min((ts-start)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    const val = format(target*eased);
+    scoreEl.textContent = reduceMotion ? val : randomGlyphs(2) + ' ' + val;
+    if(p < 1) requestAnimationFrame(countUp);
+    else {
+      scoreEl.textContent = format(target);
+      deltaEl.textContent = '+' + (2300).toLocaleString('en-US');
+      if(!reduceMotion) setInterval(enchantPulse, 6000);
+    }
+  }
+  requestAnimationFrame(countUp);
+
+  function enchantPulse(){
+    const full = format(target);
+    let i = 0;
+    const iv = setInterval(()=>{
+      const arr = full.split('');
+      const idx = Math.floor(Math.random()*(arr.length - 1));
+      if(arr[idx] !== ',' && arr[idx] !== '+'){
+        const shown = arr.slice();
+        shown[idx] = glyphs[Math.floor(Math.random()*glyphs.length)];
+        scoreEl.textContent = shown.join('');
+      }
+      i++;
+      if(i > 4){
+        clearInterval(iv);
+        scoreEl.textContent = full;
+      }
+    }, 90);
+  }
+
+  /* achievement toast */
+  const achievement = document.getElementById('achievement');
+  setTimeout(()=> achievement.classList.add('show'), 500);
+  setTimeout(()=> achievement.classList.remove('show'), 4500);
+
+  /* click-to-place blocks */
+  const blockPalette = ['#5fae3d', '#7a4a2b', '#8a8a8a', '#565656'];
+  const placedBlocks = [];
+  const MAX_BLOCKS = 25;
+  document.addEventListener('click', (e)=>{
+    if(e.target.closest('a, .link')) return;
+    const block = document.createElement('div');
+    block.className = 'placed-block';
+    const color = blockPalette[Math.floor(Math.random()*blockPalette.length)];
+    block.style.left = (e.clientX - 11) + 'px';
+    block.style.top = (e.clientY - 11) + 'px';
+    block.style.background = color;
+    block.style.boxShadow = `inset 2px 2px 0 rgba(255,255,255,0.25), inset -2px -2px 0 rgba(0,0,0,0.3)`;
+    document.body.appendChild(block);
+    placedBlocks.push(block);
+    if(placedBlocks.length > MAX_BLOCKS){
+      const old = placedBlocks.shift();
+      old.remove();
+    }
+    setTimeout(()=>{
+      block.remove();
+      const idx = placedBlocks.indexOf(block);
+      if(idx > -1) placedBlocks.splice(idx, 1);
+    }, 3800);
+  });
+</script>
+
+</body>
+</html>
