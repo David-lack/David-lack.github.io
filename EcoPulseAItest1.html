@@ -106,7 +106,7 @@
     <header>Science Voice Chat AI</header>
 
     <div id="chat-container">
-        <div class="message ai-message">Hello! Tap the big red microphone button below and ask me a science question.</div>
+        <div class="message ai-message">Hello! Tap the big red microphone button below and ask me a science question or ask about your project.</div>
     </div>
 
     <footer>
@@ -124,12 +124,13 @@
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let isProcessing = false;
+        let recognition = null;
 
         if (!SpeechRecognition) {
             statusEl.innerText = "Speech recognition is not supported in this browser. Use Chrome.";
             micBtn.disabled = true;
         } else {
-            const recognition = new SpeechRecognition();
+            recognition = new SpeechRecognition();
             recognition.lang = 'en-US';
             recognition.continuous = false;
             recognition.interimResults = false;
@@ -137,7 +138,7 @@
             function toggleListening() {
                 if (isProcessing) return;
                 try {
-                    window.speechSynthesis.cancel(); // Stop talking if interrupted
+                    window.speechSynthesis.cancel();
                     recognition.start();
                 } catch (e) {
                     console.error(e);
@@ -150,9 +151,11 @@
             };
 
             recognition.onresult = async (event) => {
-                const userSpeech = event.results[0][0].transcript;
+                recognition.stop();
                 
-                // Add user chat bubble
+                const userSpeech = event.results[0][0].transcript.trim();
+                if (!userSpeech) return;
+                
                 appendMessage(userSpeech, 'user-message');
                 
                 isProcessing = true;
@@ -164,13 +167,13 @@
 
             recognition.onerror = (event) => {
                 micBtn.classList.remove('listening');
-                statusEl.innerText = "Error: " + event.error;
+                statusEl.innerText = "Tap the microphone to speak";
                 isProcessing = false;
             };
 
             recognition.onend = () => {
+                micBtn.classList.remove('listening');
                 if (!isProcessing) {
-                    micBtn.classList.remove('listening');
                     statusEl.innerText = "Tap the microphone to speak";
                 }
             };
@@ -188,13 +191,15 @@
                             messages: [
                                 {
                                     role: "system",
-                                    content: "You are a helpful science assistant. Answer questions about physics, chemistry, biology, space, and general science concisely (1-2 sentences). If the user asks something completely unrelated to science, reply with: 'That doesn't sound like a science question. Try asking me about physics or biology!'"
+                                    content: "You are a helpful science assistant and project expert. You can answer questions about physics, chemistry, biology, space, and general science concisely (1-2 sentences). You also know about the user's project called Chud AI, which is a web-based AI application featuring a voice interface, Groq API integration, and strict science topic filtering. If the user asks about their project (e.g. 'What does my project do?'), explain that it's Chud AI, a voice-enabled web app powered by Groq that filters and answers science inquiries out loud. If the user asks something completely unrelated to science or their project, reply with: 'That doesn't sound like a science question or project query. Try asking me about physics, biology, or your project!'"
                                 },
                                 {
                                     role: "user",
                                     content: promptText
                                 }
-                            ]
+                            ],
+                            temperature: 0.7,
+                            max_tokens: 150
                         })
                     });
 
@@ -207,7 +212,7 @@
                         speakText(aiReply);
                     } else {
                         isProcessing = false;
-                        statusEl.innerText = "Error getting AI response.";
+                        statusEl.innerText = "Tap the microphone to speak";
                     }
                 } catch (err) {
                     isProcessing = false;
@@ -221,7 +226,7 @@
                 messageDiv.className = `message ${className}`;
                 messageDiv.innerText = text;
                 chatContainer.appendChild(messageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             }
 
             function speakText(text) {
