@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Science AI</title>
+    <style>
+        body {
+            background: #090d16;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .mic-container {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 120px;
+            height: 120px;
+        }
+        .pulse-btn {
+            width: 80px;
+            height: 80px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            animation: pulse 2s infinite;
+            z-index: 2;
+            border: none;
+            cursor: pointer;
+        }
+        .pulse-btn svg {
+            width: 36px;
+            height: 36px;
+            fill: white;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 25px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        #status {
+            margin-top: 30px;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            text-align: center;
+            max-width: 400px;
+            padding: 0 20px;
+        }
+        #transcript {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            font-style: italic;
+            max-width: 500px;
+            text-align: center;
+            padding: 0 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mic-container" onclick="startListening()">
+        <button class="pulse-btn" title="Click to speak">
+            <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.39-.9.88 0 2.76-2.24 5-5 5s-5-2.24-5-5c0-.49-.41-.88-.9-.88s-.9.39-.9.88c0 3.19 2.45 5.82 5.5 6.27V21h2v-3.73c3.05-.45 5.5-3.08 5.5-6.27 0-.49-.41-.88-.9-.88z"/></svg>
+        </button>
+    </div>
+
+    <div id="status">Click the microphone and ask a science question</div>
+    <div id="transcript"></div>
+
+    <script>
+        const GROQ_API_KEY = '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'; // Paste your gsk key here
+        const statusEl = document.getElementById('status');
+        const transcriptEl = document.getElementById('transcript');
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            statusEl.innerText = "Speech recognition is not supported in this browser. Try Google Chrome.";
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            function startListening() {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            recognition.onstart = () => {
+                statusEl.innerText = "Listening... Speak now!";
+                transcriptEl.innerText = "";
+            };
+
+            recognition.onresult = async (event) => {
+                const userSpeech = event.results[0][0].transcript;
+                transcriptEl.innerText = `You said: "${userSpeech}"`;
+                statusEl.innerText = "Consulting science database...";
+
+                await askGroq(userSpeech);
+            };
+
+            recognition.onerror = (event) => {
+                statusEl.innerText = "Error occurred in recognition: " + event.error;
+            };
+
+            async function askGroq(promptText) {
+                try {
+                    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${GROQ_API_KEY}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: "llama-3.3-70b-versatile",
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: "You are a strict science expert assistant. You ONLY answer questions related to science (physics, chemistry, biology, astronomy, earth science, etc.). If the user asks about anything else (history, pop culture, personal talk, coding, etc.), you must refuse to answer and reply briefly with: 'I can only answer questions related to science.' Keep your answers concise so they sound natural when spoken out loud."
+                                },
+                                {
+                                    role: "user",
+                                    content: promptText
+                                }
+                            ]
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.choices && data.choices.length > 0) {
+                        const aiReply = data.choices[0].message.content;
+                        statusEl.innerText = "Speaking response...";
+                        speakText(aiReply);
+                    } else {
+                        statusEl.innerText = "Error: Invalid response from Groq API.";
+                    }
+                } catch (err) {
+                    statusEl.innerText = "Network error connecting to Groq.";
+                    console.error(err);
+                }
+            }
+
+            function speakText(text) {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                
+                utterance.onend = () => {
+                    statusEl.innerText = "Click the microphone to ask another question";
+                };
+
+                synth.speak(utterance);
+            }
+        }
+    </script>
+</body>
+</html>
